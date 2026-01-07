@@ -12,7 +12,6 @@ export class AuthService {
     private config: AuthConfig;
     private userRepository: UserRepository;
     private sessionRepository: SessionRepository;
-
     constructor(
         config: AuthConfig,
         userRepository: UserRepository,
