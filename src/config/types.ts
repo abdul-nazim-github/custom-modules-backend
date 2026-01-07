@@ -1,7 +1,10 @@
 export interface AuthConfig {
     mongoUri: string;
-    jwtSecret: string;
+    jwt: {
+        accessSecret: string;
+        accessTTL: string;
+        refreshSecret: string;
+        refreshTTLms: number;
+    };
     sessionSecret: string;
-    tokenExpiry?: string;
-    // Add more configuration options here
 }

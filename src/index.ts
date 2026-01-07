@@ -3,6 +3,8 @@ import { AuthConfig } from './config/types.js';
 import { createAuthRoutes } from './routes/auth.routes.js';
 import { AuthController } from './controllers/auth.controller.js';
 import { AuthService } from './services/auth.service.js';
+import { UserRepository } from './repositories/user.repository.js';
+import { SessionRepository } from './repositories/session.repository.js';
 
 export class AuthModule {
     private config: AuthConfig;
@@ -15,7 +17,9 @@ export class AuthModule {
     }
 
     private initialize() {
-        const authService = new AuthService(this.config);
+        const userRepository = new UserRepository();
+        const sessionRepository = new SessionRepository();
+        const authService = new AuthService(this.config, userRepository, sessionRepository);
         const authController = new AuthController(authService);
         this.router.use('/auth', createAuthRoutes(authController));
     }
