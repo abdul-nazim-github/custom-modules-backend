@@ -2,7 +2,6 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { Types } from 'mongoose';
-
 import { AuthConfig } from '../config/types.js';
 import { UserRepository } from '../repositories/user.repository.js';
 import { SessionRepository } from '../repositories/session.repository.js';
@@ -123,7 +122,7 @@ export class AuthService {
 
     //     // Generate new tokens
     //     const accessToken = jwt.sign(
-    //         { userId: session.userId, sessionId: session._id },
+    //         { userId: session.userId },
     //         this.config.jwt.accessSecret,
     //         { expiresIn: this.config.jwt.accessTTL as any }
     //     );
@@ -150,23 +149,14 @@ export class AuthService {
     //     };
     // }
 
-    async logout(payload: { accessToken: string }) {
-        try {
-            const decoded = jwt.verify(payload.accessToken, this.config.jwt.accessSecret) as any;
-            
-            if (decoded.sessionId) {
-                await this.sessionRepository.deactivateById(decoded.sessionId);
-            }
 
-            return {
-                message: 'Logged out successfully'
-            };
-        } catch (error) {
-            // Even if token is expired or invalid, we return success to the user
-            // but we don't deactivate anything if we can't get the sessionId
-            return {
-                message: 'Logged out successfully'
-            };
-        }
+    async logout(payload: { sessionId: string }) {
+        await this.sessionRepository.deactivateById(
+            payload.sessionId
+        );
+        return {
+            message: 'Logged out successfully'
+        };
     }
+
 }

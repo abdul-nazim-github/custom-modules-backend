@@ -21,7 +21,7 @@ export class SessionRepository {
     async updateWithRotation(sessionId: any, data: Partial<Session>): Promise<void> {
         await SessionModel.findByIdAndUpdate(sessionId, {
             ...data,
-            concurrencyLock: null // Release lock
+            concurrencyLock: null
         });
     }
 
@@ -35,5 +35,9 @@ export class SessionRepository {
 
     async deactivateById(sessionId: string): Promise<void> {
         await SessionModel.findByIdAndUpdate(sessionId, { isActive: false });
+    }
+
+    async findById(sessionId: string): Promise<(Session & Document) | null> {
+        return await SessionModel.findById(sessionId);
     }
 }

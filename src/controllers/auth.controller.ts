@@ -83,35 +83,29 @@ export class AuthController {
     //         });
     //     }
     // };
+public logout = async (req: Request, res: Response) => {
+  try {
+    if (!req.sessionId) {
+      return res.status(401).json({
+        message: 'Session not found',
+        success: false
+      });
+    }
 
-    public logout = async (req: Request, res: Response) => {
-        try {
-            const { accessToken, ...extra } = req.body;
+    await this.authService.logout({
+      sessionId: req.sessionId
+    });
 
-            if (!accessToken) {
-                return res.status(400).json({
-                    message: 'Refresh token is required',
-                    success: false
-                });
-            }
+    res.json({
+      message: 'Logged out successfully',
+      success: true
+    });
+  } catch (error: any) {
+    res.status(401).json({
+      message: error.message,
+      success: false
+    });
+  }
+}
 
-            if (Object.keys(extra).length > 0) {
-                return res.status(400).json({
-                    message: `Extra fields not allowed: ${Object.keys(extra).join(', ')}`,
-                    success: false
-                });
-            }
-
-            const result = await this.authService.logout({ accessToken });
-            res.json({
-                message: result.message,
-                success: true
-            });
-        } catch (error: any) {
-            res.status(400).json({
-                message: error.message,
-                success: false
-            });
-        }
-    };
 }
