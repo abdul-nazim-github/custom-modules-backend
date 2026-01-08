@@ -11,8 +11,6 @@ export class AuthController {
     public login = async (req: Request, res: Response) => {
         try {
             const { email, password, ...extra } = req.body;
-
-            // Check for missing fields
             if (!email || !password) {
                 return res.status(400).json({
                     message: 'Email and password are required',
@@ -20,7 +18,6 @@ export class AuthController {
                 });
             }
 
-            // Check for extra fields
             if (Object.keys(extra).length > 0) {
                 return res.status(400).json({
                     message: `Extra fields not allowed: ${Object.keys(extra).join(', ')}`,
