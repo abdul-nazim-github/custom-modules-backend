@@ -16,9 +16,16 @@ export class AuthController {
                 userAgent: req.headers['user-agent'] || 'unknown'
             };
             const result = await this.authService.login({ email, password, device });
-            res.json(result);
+            res.json({
+                message: result.message,
+                data: result.data,
+                success: true
+            });
         } catch (error: any) {
-            res.status(401).json({ error: error.message });
+            res.status(401).json({
+                message: error.message,
+                success: false
+            });
         }
     };
 
@@ -29,9 +36,16 @@ export class AuthController {
                 userAgent: req.headers['user-agent'] || 'unknown'
             };
             const result = await this.authService.register({ ...req.body, device });
-            res.json(result);
+            res.json({
+                message: result.message,
+                data: result.data,
+                success: true
+            });
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            res.status(400).json({
+                message: error.message,
+                success: false
+            });
         }
     };
 
@@ -43,9 +57,16 @@ export class AuthController {
                 userAgent: req.headers['user-agent'] || 'unknown'
             };
             const result = await this.authService.refresh({ refreshToken, device });
-            res.json(result);
+            res.json({
+                message: result.message,
+                data: result.data,
+                success: true
+            });
         } catch (error: any) {
-            res.status(401).json({ error: error.message });
+            res.status(401).json({
+                message: error.message,
+                success: false
+            });
         }
     };
 }

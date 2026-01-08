@@ -42,32 +42,9 @@ export class AuthService {
             name: payload.name,
         });
 
-
-        const accessToken = jwt.sign(
-            { userId: user._id },
-            this.config.jwt.accessSecret,
-            { expiresIn: this.config.jwt.accessTTL as any }
-        );
-
-        const refreshToken = crypto.randomBytes(64).toString('hex');
-        const refreshTokenHash = crypto
-            .createHash('sha256')
-            .update(refreshToken)
-            .digest('hex');
-
-        await this.sessionRepository.create({
-            userId: user._id as Types.ObjectId,
-            refreshTokenHash,
-            device: payload.device,
-            expiresAt: new Date(
-                Date.now() + this.config.jwt.refreshTTLms
-            ),
-        });
-
         return {
             message: 'User registered successfully',
-            accessToken,
-            refreshToken,
+            data: user
         };
     }
 
@@ -115,8 +92,11 @@ export class AuthService {
         });
 
         return {
-            accessToken,
-            refreshToken,
+            message: 'Login successful',
+            data: {
+                accessToken,
+                refreshToken,
+            }
         };
     }
 
@@ -157,8 +137,11 @@ export class AuthService {
         });
 
         return {
-            accessToken,
-            refreshToken: newRefreshToken,
+            message: 'Token refreshed successfully',
+            data: {
+                accessToken,
+                refreshToken: newRefreshToken,
+            }
         };
     }
 }
