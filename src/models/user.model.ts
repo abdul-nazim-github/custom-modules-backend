@@ -7,13 +7,13 @@ export class User {
     email!: string;
 
 
-    @IsOptional()
     @IsString()
-    password?: string;
+    @IsNotEmpty()
+    password!: string;
 
-    @IsOptional()
     @IsString()
-    name?: string;
+    @IsNotEmpty()
+    name!: string;
 
     @IsOptional()
     metadata?: Record<string, any>;
@@ -21,11 +21,14 @@ export class User {
 
 const UserSchema = new Schema({
     email: { type: String, required: true, unique: true },
-    password: { type: String },
-    name: { type: String },
+    password: { type: String, required: true },
+    name: { type: String, required: true },
     metadata: { type: Schema.Types.Mixed, default: {} }
 }, {
-    timestamps: true,
+    timestamps: {
+        createdAt: 'created_at',
+        updatedAt: false
+    },
     versionKey: false
 });
 
