@@ -104,52 +104,6 @@ export class AuthService {
         };
     }
 
-    // async refresh(payload: {
-    //     refreshToken: string;
-    //     device: { ip: string; userAgent: string };
-    // }) {
-    //     const refreshTokenHash = crypto
-    //         .createHash('sha256')
-    //         .update(payload.refreshToken)
-    //         .digest('hex');
-
-    //     const session = await this.sessionRepository.findAndLock(refreshTokenHash);
-
-    //     if (!session) {
-    //         logger.warn(`Failed refresh attempt: Invalid or expired refresh token (Hash: ${refreshTokenHash})`);
-    //         throw new Error('Invalid or expired refresh token');
-    //     }
-
-    //     // Generate new tokens
-    //     const accessToken = jwt.sign(
-    //         { userId: session.userId },
-    //         this.config.jwt.accessSecret,
-    //         { expiresIn: this.config.jwt.accessTTL as any }
-    //     );
-
-    //     const newRefreshToken = crypto.randomBytes(64).toString('hex');
-    //     const newRefreshTokenHash = crypto
-    //         .createHash('sha256')
-    //         .update(newRefreshToken)
-    //         .digest('hex');
-
-    //     // Rotate token: Update session with new hash and release lock
-    //     await this.sessionRepository.updateWithRotation(session._id, {
-    //         refreshTokenHash: newRefreshTokenHash,
-    //         device: payload.device,
-    //         expiresAt: new Date(Date.now() + this.config.jwt.refreshTTLms)
-    //     });
-
-    //     return {
-    //         message: 'Token refreshed successfully',
-    //         data: {
-    //             accessToken,
-    //             refreshToken: newRefreshToken,
-    //         }
-    //     };
-    // }
-
-
     async logout(payload: { sessionId: string }) {
         await this.sessionRepository.deactivateById(
             payload.sessionId
