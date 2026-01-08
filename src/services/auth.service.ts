@@ -82,66 +82,62 @@ export class AuthService {
             .update(refreshToken)
             .digest('hex');
 
-        await this.sessionRepository.create({
-            userId: user._id as Types.ObjectId,
-            refreshTokenHash,
-            device: payload.device,
-            expiresAt: new Date(
-                Date.now() + this.config.jwt.refreshTTLms
-            ),
-        });
-
         return {
             message: 'Login successful',
             data: {
                 accessToken,
                 refreshToken,
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    name: user.name
+                }
             }
         };
     }
 
-    async refresh(payload: {
-        refreshToken: string;
-        device: { ip: string; userAgent: string };
-    }) {
-        const refreshTokenHash = crypto
-            .createHash('sha256')
-            .update(payload.refreshToken)
-            .digest('hex');
+    // async refresh(payload: {
+    //     refreshToken: string;
+    //     device: { ip: string; userAgent: string };
+    // }) {
+    //     const refreshTokenHash = crypto
+    //         .createHash('sha256')
+    //         .update(payload.refreshToken)
+    //         .digest('hex');
 
-        const session = await this.sessionRepository.findAndLock(refreshTokenHash);
+    //     const session = await this.sessionRepository.findAndLock(refreshTokenHash);
 
-        if (!session) {
-            logger.warn(`Failed refresh attempt: Invalid or expired refresh token (Hash: ${refreshTokenHash})`);
-            throw new Error('Invalid or expired refresh token');
-        }
+    //     if (!session) {
+    //         logger.warn(`Failed refresh attempt: Invalid or expired refresh token (Hash: ${refreshTokenHash})`);
+    //         throw new Error('Invalid or expired refresh token');
+    //     }
 
-        // Generate new tokens
-        const accessToken = jwt.sign(
-            { userId: session.userId },
-            this.config.jwt.accessSecret,
-            { expiresIn: this.config.jwt.accessTTL as any }
-        );
+    //     // Generate new tokens
+    //     const accessToken = jwt.sign(
+    //         { userId: session.userId },
+    //         this.config.jwt.accessSecret,
+    //         { expiresIn: this.config.jwt.accessTTL as any }
+    //     );
 
-        const newRefreshToken = crypto.randomBytes(64).toString('hex');
-        const newRefreshTokenHash = crypto
-            .createHash('sha256')
-            .update(newRefreshToken)
-            .digest('hex');
+    //     const newRefreshToken = crypto.randomBytes(64).toString('hex');
+    //     const newRefreshTokenHash = crypto
+    //         .createHash('sha256')
+    //         .update(newRefreshToken)
+    //         .digest('hex');
 
-        // Rotate token: Update session with new hash and release lock
-        await this.sessionRepository.updateWithRotation(session._id, {
-            refreshTokenHash: newRefreshTokenHash,
-            device: payload.device,
-            expiresAt: new Date(Date.now() + this.config.jwt.refreshTTLms)
-        });
+    //     // Rotate token: Update session with new hash and release lock
+    //     await this.sessionRepository.updateWithRotation(session._id, {
+    //         refreshTokenHash: newRefreshTokenHash,
+    //         device: payload.device,
+    //         expiresAt: new Date(Date.now() + this.config.jwt.refreshTTLms)
+    //     });
 
-        return {
-            message: 'Token refreshed successfully',
-            data: {
-                accessToken,
-                refreshToken: newRefreshToken,
-            }
-        };
-    }
+    //     return {
+    //         message: 'Token refreshed successfully',
+    //         data: {
+    //             accessToken,
+    //             refreshToken: newRefreshToken,
+    //         }
+    //     };
+    // }
 }
