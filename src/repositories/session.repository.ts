@@ -32,4 +32,8 @@ export class SessionRepository {
     async deactivateByHash(hash: string): Promise<void> {
         await SessionModel.updateOne({ refreshTokenHash: hash, isActive: true }, { isActive: false });
     }
+
+    async deactivateById(sessionId: string): Promise<void> {
+        await SessionModel.findByIdAndUpdate(sessionId, { isActive: false });
+    }
 }

@@ -86,9 +86,9 @@ export class AuthController {
 
     public logout = async (req: Request, res: Response) => {
         try {
-            const { refreshToken, ...extra } = req.body;
+            const { accessToken, ...extra } = req.body;
 
-            if (!refreshToken) {
+            if (!accessToken) {
                 return res.status(400).json({
                     message: 'Refresh token is required',
                     success: false
@@ -102,7 +102,7 @@ export class AuthController {
                 });
             }
 
-            const result = await this.authService.logout({ refreshToken });
+            const result = await this.authService.logout({ accessToken });
             res.json({
                 message: result.message,
                 success: true

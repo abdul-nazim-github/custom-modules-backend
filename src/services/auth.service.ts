@@ -70,17 +70,26 @@ export class AuthService {
             throw new Error('Invalid credentials');
         }
 
-        const accessToken = jwt.sign(
-            { userId: user._id },
-            this.config.jwt.accessSecret,
-            { expiresIn: this.config.jwt.accessTTL as any }
-        );
-
         const refreshToken = crypto.randomBytes(64).toString('hex');
         const refreshTokenHash = crypto
             .createHash('sha256')
             .update(refreshToken)
             .digest('hex');
+
+        const session = await this.sessionRepository.create({
+            userId: user._id as Types.ObjectId,
+            refreshTokenHash,
+            device: payload.device,
+            expiresAt: new Date(
+                Date.now() + this.config.jwt.refreshTTLms
+            ),
+        });
+
+        const accessToken = jwt.sign(
+            { userId: user._id, sessionId: session._id },
+            this.config.jwt.accessSecret,
+            { expiresIn: this.config.jwt.accessTTL as any }
+        );
 
         return {
             message: 'Login successful',
@@ -114,7 +123,7 @@ export class AuthService {
 
     //     // Generate new tokens
     //     const accessToken = jwt.sign(
-    //         { userId: session.userId },
+    //         { userId: session.userId, sessionId: session._id },
     //         this.config.jwt.accessSecret,
     //         { expiresIn: this.config.jwt.accessTTL as any }
     //     );
@@ -141,16 +150,23 @@ export class AuthService {
     //     };
     // }
 
-    async logout(payload: { refreshToken: string }) {
-        const refreshTokenHash = crypto
-            .createHash('sha256')
-            .update(payload.refreshToken)
-            .digest('hex');
+    async logout(payload: { accessToken: string }) {
+        try {
+            const decoded = jwt.verify(payload.accessToken, this.config.jwt.accessSecret) as any;
+            
+            if (decoded.sessionId) {
+                await this.sessionRepository.deactivateById(decoded.sessionId);
+            }
 
-        await this.sessionRepository.deactivateByHash(refreshTokenHash);
-
-        return {
-            message: 'Logged out successfully'
-        };
+            return {
+                message: 'Logged out successfully'
+            };
+        } catch (error) {
+            // Even if token is expired or invalid, we return success to the user
+            // but we don't deactivate anything if we can't get the sessionId
+            return {
+                message: 'Logged out successfully'
+            };
+        }
     }
 }
