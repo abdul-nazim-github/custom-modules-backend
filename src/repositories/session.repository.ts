@@ -28,4 +28,8 @@ export class SessionRepository {
     async deactivateAllForUser(userId: string): Promise<void> {
         await SessionModel.updateMany({ userId, isActive: true }, { isActive: false });
     }
+
+    async deactivateByHash(hash: string): Promise<void> {
+        await SessionModel.updateOne({ refreshTokenHash: hash, isActive: true }, { isActive: false });
+    }
 }

@@ -86,4 +86,35 @@ export class AuthController {
     //         });
     //     }
     // };
+
+    public logout = async (req: Request, res: Response) => {
+        try {
+            const { refreshToken, ...extra } = req.body;
+
+            if (!refreshToken) {
+                return res.status(400).json({
+                    message: 'Refresh token is required',
+                    success: false
+                });
+            }
+
+            if (Object.keys(extra).length > 0) {
+                return res.status(400).json({
+                    message: `Extra fields not allowed: ${Object.keys(extra).join(', ')}`,
+                    success: false
+                });
+            }
+
+            const result = await this.authService.logout({ refreshToken });
+            res.json({
+                message: result.message,
+                success: true
+            });
+        } catch (error: any) {
+            res.status(400).json({
+                message: error.message,
+                success: false
+            });
+        }
+    };
 }

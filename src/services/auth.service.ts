@@ -140,4 +140,17 @@ export class AuthService {
     //         }
     //     };
     // }
+
+    async logout(payload: { refreshToken: string }) {
+        const refreshTokenHash = crypto
+            .createHash('sha256')
+            .update(payload.refreshToken)
+            .digest('hex');
+
+        await this.sessionRepository.deactivateByHash(refreshTokenHash);
+
+        return {
+            message: 'Logged out successfully'
+        };
+    }
 }
