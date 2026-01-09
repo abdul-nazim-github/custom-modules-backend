@@ -8,7 +8,7 @@ import { UserRepository } from '../repositories/user.repository.js';
 import { roleMiddleware } from '../middlewares/role.middleware.js';
 import { permissionMiddleware } from '../middlewares/permission.middleware.js';
 import { Role, Permission } from '../config/roles.js';
-
+import { checkEmailExists } from '../middlewares/user.middleware.js';
 export const createAuthRoutes = (
     authController: AuthController,
     accessSecret: string,
@@ -18,10 +18,7 @@ export const createAuthRoutes = (
     const router = Router();
 
     router.post('/login', authController.login);
-    router.post('/register', validateBody(User), authController.register);
     router.post('/register', checkEmailExists(userRepository), validateBody(User), authController.register);
-    // router.post('/logout', authController.logout);
-    // router.post('/refresh', authController.refresh);
     router.post('/logout', authMiddleware(accessSecret, sessionRepository, userRepository), authController.logout);
 
     //  protected routes
