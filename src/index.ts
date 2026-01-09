@@ -21,7 +21,7 @@ export class AuthModule {
         const sessionRepository = new SessionRepository();
         const authService = new AuthService(this.config, userRepository, sessionRepository);
         const authController = new AuthController(authService);
-        this.router.use('/auth', createAuthRoutes(authController, this.config.jwt.accessSecret, sessionRepository));
+        this.router.use('/auth', createAuthRoutes(authController, this.config.jwt.accessSecret, sessionRepository, userRepository));
     }
 
     public static init(config: AuthConfig): AuthModule {

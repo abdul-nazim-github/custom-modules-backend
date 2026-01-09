@@ -6,6 +6,7 @@ import { AuthConfig } from '../config/types.js';
 import { UserRepository } from '../repositories/user.repository.js';
 import { SessionRepository } from '../repositories/session.repository.js';
 import { logger } from '../utils/logger.js';
+import { Role, RolePermissions } from '../config/roles.js';
 
 export class AuthService {
     private config: AuthConfig;
@@ -41,9 +42,22 @@ export class AuthService {
             name: payload.name,
         });
 
+        const userRole = (user.role as Role) || Role.USER;
+        const effectivePermissions = Array.from(new Set([
+            ...(RolePermissions[userRole] || []),
+            ...(user.permissions || [])
+        ]));
+
         return {
             message: 'User registered successfully',
-            data: user
+            data: {
+                id: user._id,
+                email: user.email,
+                name: user.name,
+                role: userRole,
+                permissions: effectivePermissions,
+                created_at: (user as any).created_at
+            }
         };
     }
 
@@ -98,7 +112,12 @@ export class AuthService {
                 user: {
                     id: user._id,
                     email: user.email,
-                    name: user.name
+                    name: user.name,
+                    role: user.role || Role.USER,
+                    permissions: Array.from(new Set([
+                        ...(RolePermissions[(user.role as Role) || Role.USER] || []),
+                        ...(user.permissions || [])
+                    ]))
                 }
             }
         };

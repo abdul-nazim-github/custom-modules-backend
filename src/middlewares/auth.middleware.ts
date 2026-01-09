@@ -2,12 +2,16 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
 import { SessionRepository } from '../repositories/session.repository.js';
+import { UserRepository } from '../repositories/user.repository.js';
+import { Role, RolePermissions } from '../config/roles.js';
 
 declare global {
   namespace Express {
     interface Request {
       user?: {
         id: string;
+        role: string;
+        permissions: string[];
       };
       sessionId?: string;
     }
@@ -16,7 +20,8 @@ declare global {
 
 export const authMiddleware = (
   accessSecret: string,
-  sessionRepository: SessionRepository
+  sessionRepository: SessionRepository,
+  userRepository: UserRepository
 ) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -43,7 +48,24 @@ export const authMiddleware = (
         }
       }
 
-      req.user = { id: decoded.userId };
+      const user = await userRepository.findById(decoded.userId);
+      if (!user) {
+        return res.status(401).json({
+          message: 'User not found',
+          success: false
+        });
+      }
+
+      const userRole = (user.role as Role) || Role.USER;
+      const rolePermissions = RolePermissions[userRole] || [];
+      const userPermissions = user.permissions || [];
+      const mergedPermissions = Array.from(new Set([...rolePermissions, ...userPermissions]));
+
+      req.user = {
+        id: decoded.userId,
+        role: userRole,
+        permissions: mergedPermissions
+      };
       req.sessionId = decoded.sessionId;
 
       next();
