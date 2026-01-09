@@ -60,7 +60,6 @@ export const authMiddleware = (
       const rolePermissions = RolePermissions[userRole] || [];
       const userPermissions = user.permissions || [];
       const mergedPermissions = Array.from(new Set([...rolePermissions, ...userPermissions]));
-
       req.user = {
         id: decoded.userId,
         role: userRole,
