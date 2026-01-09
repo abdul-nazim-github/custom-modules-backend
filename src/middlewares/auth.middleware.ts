@@ -46,6 +46,13 @@ export const authMiddleware = (
             success: false
           });
         }
+
+        if (session.userId.toString() !== decoded.userId) {
+          return res.status(401).json({
+            message: 'Session does not belong to this user',
+            success: false
+          });
+        }
       }
 
       const user = await userRepository.findById(decoded.userId);

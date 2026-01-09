@@ -1,25 +1,25 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
 import { Types } from 'mongoose';
 import { AuthConfig } from '../config/types.js';
 import { UserRepository } from '../repositories/user.repository.js';
-import { SessionRepository } from '../repositories/session.repository.js';
+import { SessionService } from './session.service.js';
 import { logger } from '../utils/logger.js';
 import { Role, RolePermissions } from '../config/roles.js';
 
 export class AuthService {
     private config: AuthConfig;
     private userRepository: UserRepository;
-    private sessionRepository: SessionRepository;
+    private sessionService: SessionService;
+
     constructor(
         config: AuthConfig,
         userRepository: UserRepository,
-        sessionRepository: SessionRepository
+        sessionService: SessionService
     ) {
         this.config = config;
         this.userRepository = userRepository;
-        this.sessionRepository = sessionRepository;
+        this.sessionService = sessionService;
     }
 
     async register(payload: {
@@ -82,20 +82,10 @@ export class AuthService {
             throw new Error('Invalid credentials');
         }
 
-        const refreshToken = crypto.randomBytes(64).toString('hex');
-        const refreshTokenHash = crypto
-            .createHash('sha256')
-            .update(refreshToken)
-            .digest('hex');
-
-        const session = await this.sessionRepository.create({
-            userId: user._id as Types.ObjectId,
-            refreshTokenHash,
-            device: payload.device,
-            expiresAt: new Date(
-                Date.now() + this.config.jwt.refreshTTLms
-            ),
-        });
+        const { session, refreshToken } = await this.sessionService.createSession(
+            user._id as Types.ObjectId,
+            payload.device
+        );
 
         const accessToken = jwt.sign(
             { userId: user._id, sessionId: session._id },
@@ -123,12 +113,9 @@ export class AuthService {
     }
 
     async logout(payload: { sessionId: string }) {
-        await this.sessionRepository.deactivateById(
-            payload.sessionId
-        );
+        await this.sessionService.deactivateSession(payload.sessionId);
         return {
             message: 'Logged out successfully'
         };
     }
-
 }
