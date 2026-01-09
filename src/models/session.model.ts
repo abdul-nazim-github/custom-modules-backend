@@ -49,7 +49,10 @@ const SessionSchema = new Schema({
     isActive: { type: Boolean, default: true },
     concurrencyLock: { type: String, default: null },
 }, {
-    timestamps: true,
+    timestamps: {
+        createdAt: 'created_at',
+        updatedAt: false
+    },
     versionKey: false
 });
 

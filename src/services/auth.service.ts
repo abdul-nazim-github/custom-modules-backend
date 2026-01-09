@@ -2,11 +2,11 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { Types } from 'mongoose';
-
 import { AuthConfig } from '../config/types.js';
 import { UserRepository } from '../repositories/user.repository.js';
 import { SessionRepository } from '../repositories/session.repository.js';
 import { logger } from '../utils/logger.js';
+import { Role, RolePermissions } from '../config/roles.js';
 
 export class AuthService {
     private config: AuthConfig;
@@ -41,32 +41,22 @@ export class AuthService {
             name: payload.name,
         });
 
-
-        const accessToken = jwt.sign(
-            { userId: user._id },
-            this.config.jwt.accessSecret,
-            { expiresIn: this.config.jwt.accessTTL as any }
-        );
-
-        const refreshToken = crypto.randomBytes(64).toString('hex');
-        const refreshTokenHash = crypto
-            .createHash('sha256')
-            .update(refreshToken)
-            .digest('hex');
-
-        await this.sessionRepository.create({
-            userId: user._id as Types.ObjectId,
-            refreshTokenHash,
-            device: payload.device,
-            expiresAt: new Date(
-                Date.now() + this.config.jwt.refreshTTLms
-            ),
-        });
+        const userRole = (user.role as Role) || Role.USER;
+        const effectivePermissions = Array.from(new Set([
+            ...(RolePermissions[userRole] || []),
+            ...(user.permissions || [])
+        ]));
 
         return {
             message: 'User registered successfully',
-            accessToken,
-            refreshToken,
+            data: {
+                id: user._id,
+                email: user.email,
+                name: user.name,
+                role: userRole,
+                permissions: effectivePermissions,
+                created_at: (user as any).created_at
+            }
         };
     }
 
@@ -92,19 +82,13 @@ export class AuthService {
             throw new Error('Invalid credentials');
         }
 
-        const accessToken = jwt.sign(
-            { userId: user._id },
-            this.config.jwt.accessSecret,
-            { expiresIn: this.config.jwt.accessTTL as any }
-        );
-
         const refreshToken = crypto.randomBytes(64).toString('hex');
         const refreshTokenHash = crypto
             .createHash('sha256')
             .update(refreshToken)
             .digest('hex');
 
-        await this.sessionRepository.create({
+        const session = await this.sessionRepository.create({
             userId: user._id as Types.ObjectId,
             refreshTokenHash,
             device: payload.device,
@@ -113,51 +97,38 @@ export class AuthService {
             ),
         });
 
-        return {
-            accessToken,
-            refreshToken,
-        };
-    }
-
-    async refresh(payload: {
-        refreshToken: string;
-        device: { ip: string; userAgent: string };
-    }) {
-        const refreshTokenHash = crypto
-            .createHash('sha256')
-            .update(payload.refreshToken)
-            .digest('hex');
-
-        const session = await this.sessionRepository.findAndLock(refreshTokenHash);
-
-        if (!session) {
-            logger.warn(`Failed refresh attempt: Invalid or expired refresh token (Hash: ${refreshTokenHash})`);
-            throw new Error('Invalid or expired refresh token');
-        }
-
-        // Generate new tokens
         const accessToken = jwt.sign(
-            { userId: session.userId },
+            { userId: user._id, sessionId: session._id },
             this.config.jwt.accessSecret,
             { expiresIn: this.config.jwt.accessTTL as any }
         );
 
-        const newRefreshToken = crypto.randomBytes(64).toString('hex');
-        const newRefreshTokenHash = crypto
-            .createHash('sha256')
-            .update(newRefreshToken)
-            .digest('hex');
-
-        // Rotate token: Update session with new hash and release lock
-        await this.sessionRepository.updateWithRotation(session._id, {
-            refreshTokenHash: newRefreshTokenHash,
-            device: payload.device,
-            expiresAt: new Date(Date.now() + this.config.jwt.refreshTTLms)
-        });
-
         return {
-            accessToken,
-            refreshToken: newRefreshToken,
+            message: 'Login successful',
+            data: {
+                accessToken,
+                refreshToken,
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role || Role.USER,
+                    permissions: Array.from(new Set([
+                        ...(RolePermissions[(user.role as Role) || Role.USER] || []),
+                        ...(user.permissions || [])
+                    ]))
+                }
+            }
         };
     }
+
+    async logout(payload: { sessionId: string }) {
+        await this.sessionRepository.deactivateById(
+            payload.sessionId
+        );
+        return {
+            message: 'Logged out successfully'
+        };
+    }
+
 }
