@@ -19,6 +19,7 @@ export const createAuthRoutes = (
 
     router.post('/login', authController.login);
     router.post('/register', validateBody(User), authController.register);
+    router.post('/register', checkEmailExists(userRepository), validateBody(User), authController.register);
     // router.post('/logout', authController.logout);
     // router.post('/refresh', authController.refresh);
     router.post('/logout', authMiddleware(accessSecret, sessionRepository, userRepository), authController.logout);
