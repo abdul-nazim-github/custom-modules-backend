@@ -5,7 +5,6 @@ import { AuthConfig } from '../config/types.js';
 import { UserRepository } from '../repositories/user.repository.js';
 import { SessionService } from './session.service.js';
 import { logger } from '../utils/logger.js';
-import { Role, RolePermissions } from '../config/roles.js';
 
 export class AuthService {
     private config: AuthConfig;
@@ -20,44 +19,6 @@ export class AuthService {
         this.config = config;
         this.userRepository = userRepository;
         this.sessionService = sessionService;
-    }
-
-    async register(payload: {
-        email: string;
-        password: string;
-        name?: string;
-        device: { ip: string; userAgent: string };
-    }) {
-        const existing = await this.userRepository.findByEmail(payload.email);
-        if (existing) {
-            throw new Error('User already exists');
-        }
-
-        const hashedPassword = await bcrypt.hash(payload.password, 12);
-
-        const user = await this.userRepository.create({
-            email: payload.email,
-            password: hashedPassword,
-            name: payload.name,
-        });
-
-        const userRole = (user.role as Role) || Role.USER;
-        const effectivePermissions = Array.from(new Set([
-            ...(RolePermissions[userRole] || []),
-            ...(user.permissions || [])
-        ]));
-
-        return {
-            message: 'User registered successfully',
-            data: {
-                id: user._id,
-                email: user.email,
-                name: user.name,
-                role: userRole,
-                permissions: effectivePermissions,
-                created_at: (user as any).created_at
-            }
-        };
     }
 
     async login(payload: {
@@ -101,12 +62,7 @@ export class AuthService {
                 user: {
                     id: user._id,
                     email: user.email,
-                    name: user.name,
-                    role: user.role || Role.USER,
-                    permissions: Array.from(new Set([
-                        ...(RolePermissions[(user.role as Role) || Role.USER] || []),
-                        ...(user.permissions || [])
-                    ]))
+                    name: user.name
                 }
             }
         };
