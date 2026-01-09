@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, IsOptional } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, IsOptional, MinLength, Matches} from 'class-validator';
 import { Schema, model, Document } from 'mongoose';
 import { Role } from '../config/roles.js';
 
@@ -10,10 +10,15 @@ export class User {
 
     @IsString()
     @IsNotEmpty()
+    @MinLength(8, { message: 'Password must be at least 8 characters long' })
+    @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
+        message: 'Password is too weak. It must contain at least one uppercase letter, one number or special character.',
+    })
     password!: string;
 
     @IsString()
     @IsNotEmpty()
+    @MinLength(3, { message: 'Name must be at least 3 characters long' })
     name!: string;
 
     @IsOptional()
