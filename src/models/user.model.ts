@@ -17,7 +17,7 @@ export class User {
 
     @IsString()
     @IsNotEmpty()
-    @MinLength(2, { message: 'Name must be at least 2 characters long' })
+    @MinLength(3, { message: 'Name must be at least 3 characters long' })
     name!: string;
 
     @IsOptional()
