@@ -31,7 +31,7 @@ export class AuthService {
         return {
             message: 'User registered successfully',
             data: {
-                id: user._id,
+                _id: user._id,
                 email: user.email,
                 name: user.name,
                 created_at: (user as any).created_at
