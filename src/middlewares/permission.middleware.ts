@@ -11,9 +11,7 @@ export const permissionMiddleware = (requiredPermission: Permission) => {
                 success: false
             });
         }
-
         const permissions = user.permissions || [];
-
         if (!permissions.includes(requiredPermission)) {
             return res.status(403).json({
                 message: 'Forbidden: You do not have the required permission',
