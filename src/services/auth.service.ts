@@ -118,4 +118,109 @@ export class AuthService {
             message: 'Logged out successfully'
         };
     }
+
+    async updateUserRole(payload: {
+        userId: string;
+        newRole: Role;
+        updatedBy: string;
+    }) {
+        const updater = await this.userRepository.findById(payload.updatedBy as any);
+        if (!updater || updater.role !== Role.SUPER_ADMIN) {
+            throw new Error('Only SUPER_ADMIN can update user roles');
+        }
+
+        if (!Object.values(Role).includes(payload.newRole)) {
+            throw new Error('Invalid role');
+        }
+
+        const user = await this.userRepository.updateRole(payload.userId, payload.newRole);
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        logger.info(`User ${payload.userId} role updated to ${payload.newRole} by ${payload.updatedBy}`);
+
+        return {
+            message: 'User role updated successfully',
+            data: {
+                id: user._id,
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                permissions: RolePermissions[user.role as Role] || []
+            }
+        };
+    }
+
+    async updateUserPermissions(payload: {
+        userId: string;
+        action: 'add' | 'remove';
+        permissions: string[];
+        updatedBy: string;
+    }) {
+        const updater = await this.userRepository.findById(payload.updatedBy as any);
+        if (!updater || updater.role !== Role.SUPER_ADMIN) {
+            throw new Error('Only SUPER_ADMIN can update user permissions');
+        }
+
+        const user = await this.userRepository.findById(payload.userId as any);
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        let updatedPermissions = user.permissions || [];
+
+        if (payload.action === 'add') {
+            updatedPermissions = Array.from(new Set([...updatedPermissions, ...payload.permissions]));
+        } else {
+            updatedPermissions = updatedPermissions.filter(p => !payload.permissions.includes(p));
+        }
+
+        const updatedUser = await this.userRepository.updatePermissions(payload.userId, updatedPermissions);
+
+        if (!updatedUser) {
+            throw new Error('Failed to update user permissions');
+        }
+
+        logger.info(`User ${payload.userId} permissions ${payload.action}ed by ${payload.updatedBy}`);
+
+        return {
+            message: 'User permissions updated successfully',
+            data: {
+                id: updatedUser._id,
+                email: updatedUser.email,
+                customPermissions: updatedUser.permissions,
+                rolePermissions: RolePermissions[updatedUser.role as Role] || [],
+                effectivePermissions: Array.from(new Set([
+                    ...(RolePermissions[updatedUser.role as Role] || []),
+                    ...(updatedUser.permissions || [])
+                ]))
+            }
+        };
+    }
+
+    async listUsers(payload: {
+        page?: number;
+        limit?: number;
+        role?: Role;
+    }) {
+        const users = await this.userRepository.findAll({
+            page: payload.page || 1,
+            limit: payload.limit || 10,
+            role: payload.role
+        });
+
+        return {
+            message: 'Users retrieved successfully',
+            data: users.map(user => ({
+                id: user._id,
+                email: user.email,
+                name: user.name,
+                role: user.role || Role.USER,
+                permissions: RolePermissions[user.role as Role] || RolePermissions[Role.USER],
+                customPermissions: user.permissions || [],
+                created_at: (user as any).created_at
+            }))
+        };
+    }
 }

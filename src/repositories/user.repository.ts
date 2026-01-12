@@ -19,4 +19,39 @@ export class UserRepository {
     }) {
         return UserModel.create(data);
     }
+
+    async updateRole(userId: string, role: string) {
+        return UserModel.findByIdAndUpdate(
+            userId,
+            { role },
+            { new: true }
+        );
+    }
+
+    async updatePermissions(userId: string, permissions: string[]) {
+        return UserModel.findByIdAndUpdate(
+            userId,
+            { permissions },
+            { new: true }
+        );
+    }
+
+    async findAll(filters: {
+        page: number;
+        limit: number;
+        role?: string;
+    }) {
+        const query: any = {};
+        if (filters.role) {
+            query.role = filters.role;
+        }
+
+        const skip = (filters.page - 1) * filters.limit;
+
+        return UserModel.find(query)
+            .skip(skip)
+            .limit(filters.limit)
+            .select('-password')
+            .exec();
+    }
 }

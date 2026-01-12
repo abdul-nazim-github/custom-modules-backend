@@ -45,6 +45,23 @@ export const createAuthRoutes = (
         permissionMiddleware(Permission.SECURITY),
         (req, res) => res.json({ message: 'Welcome to Security', success: true })
     );
+    router.get('/users',
+        authMiddleware(accessSecret, sessionRepository, userRepository),
+        permissionMiddleware(Permission.MANAGE_USERS),
+        authController.listUsers
+    );
+
+    router.put('/users/:userId/role',
+        authMiddleware(accessSecret, sessionRepository, userRepository),
+        permissionMiddleware(Permission.MANAGE_USERS),
+        authController.updateUserRole
+    );
+
+    router.put('/users/:userId/permissions',
+        authMiddleware(accessSecret, sessionRepository, userRepository),
+        permissionMiddleware(Permission.MANAGE_PERMISSIONS),
+        authController.updateUserPermissions
+    );
 
     return router;
 };
