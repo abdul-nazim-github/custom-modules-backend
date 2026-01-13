@@ -16,7 +16,6 @@ export class AuthModule {
         this.router = Router();
         this.initialize();
     }
-
     private initialize() {
         const userRepository = new UserRepository();
         const sessionRepository = new SessionRepository();
