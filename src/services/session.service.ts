@@ -11,7 +11,6 @@ export class SessionService {
         this.sessionRepository = sessionRepository;
         this.config = config;
     }
-
     async createSession(userId: Types.ObjectId, device: { ip: string; userAgent: string }) {
         const refreshToken = crypto.randomBytes(64).toString('hex');
         const refreshTokenHash = crypto
