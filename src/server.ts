@@ -18,7 +18,7 @@ const authConfig = {
         accessSecret: process.env.JWT_ACCESS_SECRET || 'access-secret',
         accessTTL: process.env.JWT_ACCESS_TTL || '15m',
         refreshSecret: process.env.JWT_REFRESH_SECRET || 'refresh-secret',
-        refreshTTLms: parseInt(process.env.JWT_REFRESH_TTL_MS || '604800000') // 7 days
+        refreshTTLms: parseInt(process.env.JWT_REFRESH_TTL_MS || '604800000')
     },
     sessionSecret: process.env.SESSION_SECRET || 'session-secret'
 };
@@ -28,23 +28,12 @@ app.use('/api', authModule.router);
 
 const start = async () => {
     try {
-        // Log messages as requested
         logger.info('📝 Change Log initiated successfully. It can be disabled from env => REQUEST_LOG="false"');
         logger.info('📝 Request Logging is enabled. It can be disabled from env => REQUEST_LOG="false"');
-        logger.info('🚀 File System Cache Connected from custom-modules');
-        logger.warn('⚠️  No Kafka broker found for => AppEvent');
-
-        console.log('v1/web-servicecalling saveHooks');
         console.log(`Application is running on http://localhost:${port}`);
-
-        // Connect to MongoDB
         await mongoose.connect(authConfig.mongoUri);
         logger.info('💾 Database connected successfully');
-        logger.info('🔌 Redis Connected from hire-backend');
-        logger.info('🚀 Redis Is Ready');
-
         app.listen(port, () => {
-            // Already logged above as per user request
         });
     } catch (error) {
         logger.error(`Error starting server: ${error}`);

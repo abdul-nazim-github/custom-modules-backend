@@ -1,25 +1,25 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
 import { Types } from 'mongoose';
-
 import { AuthConfig } from '../config/types.js';
 import { UserRepository } from '../repositories/user.repository.js';
-import { SessionRepository } from '../repositories/session.repository.js';
+import { SessionService } from './session.service.js';
 import { logger } from '../utils/logger.js';
+import { Role, RolePermissions } from '../config/roles.js';
 
 export class AuthService {
     private config: AuthConfig;
     private userRepository: UserRepository;
-    private sessionRepository: SessionRepository;
+    private sessionService: SessionService;
+
     constructor(
         config: AuthConfig,
         userRepository: UserRepository,
-        sessionRepository: SessionRepository
+        sessionService: SessionService
     ) {
         this.config = config;
         this.userRepository = userRepository;
-        this.sessionRepository = sessionRepository;
+        this.sessionService = sessionService;
     }
 
     async register(payload: {
@@ -41,32 +41,22 @@ export class AuthService {
             name: payload.name,
         });
 
-
-        const accessToken = jwt.sign(
-            { userId: user._id },
-            this.config.jwt.accessSecret,
-            { expiresIn: this.config.jwt.accessTTL as any }
-        );
-
-        const refreshToken = crypto.randomBytes(64).toString('hex');
-        const refreshTokenHash = crypto
-            .createHash('sha256')
-            .update(refreshToken)
-            .digest('hex');
-
-        await this.sessionRepository.create({
-            userId: user._id as Types.ObjectId,
-            refreshTokenHash,
-            device: payload.device,
-            expiresAt: new Date(
-                Date.now() + this.config.jwt.refreshTTLms
-            ),
-        });
+        const userRole = (user.role as Role) || Role.USER;
+        const effectivePermissions = Array.from(new Set([
+            ...(RolePermissions[userRole] || []),
+            ...(user.permissions || [])
+        ]));
 
         return {
             message: 'User registered successfully',
-            accessToken,
-            refreshToken,
+            data: {
+                id: user._id,
+                email: user.email,
+                name: user.name,
+                role: userRole,
+                permissions: effectivePermissions,
+                created_at: (user as any).created_at
+            }
         };
     }
 
@@ -92,72 +82,145 @@ export class AuthService {
             throw new Error('Invalid credentials');
         }
 
+        const { session, refreshToken } = await this.sessionService.createSession(
+            user._id as Types.ObjectId,
+            payload.device
+        );
+
         const accessToken = jwt.sign(
-            { userId: user._id },
+            { userId: user._id, sessionId: session._id },
             this.config.jwt.accessSecret,
             { expiresIn: this.config.jwt.accessTTL as any }
         );
 
-        const refreshToken = crypto.randomBytes(64).toString('hex');
-        const refreshTokenHash = crypto
-            .createHash('sha256')
-            .update(refreshToken)
-            .digest('hex');
-
-        await this.sessionRepository.create({
-            userId: user._id as Types.ObjectId,
-            refreshTokenHash,
-            device: payload.device,
-            expiresAt: new Date(
-                Date.now() + this.config.jwt.refreshTTLms
-            ),
-        });
-
         return {
-            accessToken,
-            refreshToken,
+            message: 'Login successful',
+            data: {
+                accessToken,
+                refreshToken,
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role || Role.USER,
+                    permissions: Array.from(new Set([
+                        ...(RolePermissions[(user.role as Role) || Role.USER] || []),
+                        ...(user.permissions || [])
+                    ]))
+                }
+            }
         };
     }
 
-    async refresh(payload: {
-        refreshToken: string;
-        device: { ip: string; userAgent: string };
+    async logout(payload: { sessionId: string }) {
+        await this.sessionService.deactivateSession(payload.sessionId);
+        return {
+            message: 'Logged out successfully'
+        };
+    }
+
+    async updateUserRole(payload: {
+        userId: string;
+        newRole: Role;
+        updatedBy: string;
     }) {
-        const refreshTokenHash = crypto
-            .createHash('sha256')
-            .update(payload.refreshToken)
-            .digest('hex');
-
-        const session = await this.sessionRepository.findAndLock(refreshTokenHash);
-
-        if (!session) {
-            logger.warn(`Failed refresh attempt: Invalid or expired refresh token (Hash: ${refreshTokenHash})`);
-            throw new Error('Invalid or expired refresh token');
+        const updater = await this.userRepository.findById(payload.updatedBy as any);
+        if (!updater || updater.role !== Role.SUPER_ADMIN) {
+            throw new Error('Only SUPER_ADMIN can update user roles');
         }
 
-        // Generate new tokens
-        const accessToken = jwt.sign(
-            { userId: session.userId },
-            this.config.jwt.accessSecret,
-            { expiresIn: this.config.jwt.accessTTL as any }
-        );
+        if (!Object.values(Role).includes(payload.newRole)) {
+            throw new Error('Invalid role');
+        }
 
-        const newRefreshToken = crypto.randomBytes(64).toString('hex');
-        const newRefreshTokenHash = crypto
-            .createHash('sha256')
-            .update(newRefreshToken)
-            .digest('hex');
+        const user = await this.userRepository.updateRole(payload.userId, payload.newRole);
+        if (!user) {
+            throw new Error('User not found');
+        }
 
-        // Rotate token: Update session with new hash and release lock
-        await this.sessionRepository.updateWithRotation(session._id, {
-            refreshTokenHash: newRefreshTokenHash,
-            device: payload.device,
-            expiresAt: new Date(Date.now() + this.config.jwt.refreshTTLms)
+        logger.info(`User ${payload.userId} role updated to ${payload.newRole} by ${payload.updatedBy}`);
+
+        return {
+            message: 'User role updated successfully',
+            data: {
+                id: user._id,
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                permissions: RolePermissions[user.role as Role] || []
+            }
+        };
+    }
+
+    async updateUserPermissions(payload: {
+        userId: string;
+        action: 'add' | 'remove';
+        permissions: string[];
+        updatedBy: string;
+    }) {
+        const updater = await this.userRepository.findById(payload.updatedBy as any);
+        if (!updater || updater.role !== Role.SUPER_ADMIN) {
+            throw new Error('Only SUPER_ADMIN can update user permissions');
+        }
+
+        const user = await this.userRepository.findById(payload.userId as any);
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        let updatedPermissions = user.permissions || [];
+
+        if (payload.action === 'add') {
+            updatedPermissions = Array.from(new Set([...updatedPermissions, ...payload.permissions]));
+        } else {
+            updatedPermissions = updatedPermissions.filter(p => !payload.permissions.includes(p));
+        }
+
+        const updatedUser = await this.userRepository.updatePermissions(payload.userId, updatedPermissions);
+
+        if (!updatedUser) {
+            throw new Error('Failed to update user permissions');
+        }
+
+        logger.info(`User ${payload.userId} permissions ${payload.action}ed by ${payload.updatedBy}`);
+
+        return {
+            message: 'User permissions updated successfully',
+            data: {
+                id: updatedUser._id,
+                email: updatedUser.email,
+                customPermissions: updatedUser.permissions,
+                rolePermissions: RolePermissions[updatedUser.role as Role] || [],
+                effectivePermissions: Array.from(new Set([
+                    ...(RolePermissions[updatedUser.role as Role] || []),
+                    ...(updatedUser.permissions || [])
+                ]))
+            }
+        };
+    }
+
+    async listUsers(payload: {
+        page?: number;
+        limit?: number;
+        role?: Role;
+    }) {
+        const users = await this.userRepository.findAll({
+            page: payload.page || 1,
+            limit: payload.limit || 10,
+            role: payload.role
         });
 
         return {
-            accessToken,
-            refreshToken: newRefreshToken,
+            message: 'Users retrieved successfully',
+            data: users.map(user => ({
+                id: user._id,
+                email: user.email,
+                name: user.name,
+                role: user.role || Role.USER,
+                permissions: RolePermissions[user.role as Role] || RolePermissions[Role.USER],
+                customPermissions: user.permissions || [],
+                created_at: (user as any).created_at
+            }))
         };
     }
 }
