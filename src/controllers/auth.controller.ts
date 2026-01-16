@@ -131,7 +131,6 @@ export class AuthController {
                     success: false
                 });
             }
-
             const result = await this.authService.updateUserPermissions({
                 userId: userId as string,
                 permissions,
