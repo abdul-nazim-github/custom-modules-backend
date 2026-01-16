@@ -103,10 +103,7 @@ export class AuthService {
                     email: user.email,
                     name: user.name,
                     role: user.role || Role.USER,
-                    permissions: Array.from(new Set([
-                        ...(RolePermissions[(user.role as Role) || Role.USER] || []),
-                        ...(user.permissions || [])
-                    ]))
+                    permissions: user.permissions || []
                 }
             }
         };
@@ -191,12 +188,8 @@ export class AuthService {
             data: {
                 id: updatedUser._id,
                 email: updatedUser.email,
-                customPermissions: updatedUser.permissions,
-                rolePermissions: RolePermissions[updatedUser.role as Role] || [],
-                effectivePermissions: Array.from(new Set([
-                    ...(RolePermissions[updatedUser.role as Role] || []),
-                    ...(updatedUser.permissions || [])
-                ]))
+                role: updatedUser.role,
+                permissions: updatedUser.permissions
             }
         };
     }
@@ -219,8 +212,7 @@ export class AuthService {
                 email: user.email,
                 name: user.name,
                 role: user.role || Role.USER,
-                permissions: RolePermissions[user.role as Role] || RolePermissions[Role.USER],
-                customPermissions: user.permissions || [],
+                permissions: user.permissions || [],
                 created_at: (user as any).created_at
             }))
         };
