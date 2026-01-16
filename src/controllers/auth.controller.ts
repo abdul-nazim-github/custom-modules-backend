@@ -187,7 +187,6 @@ export class AuthController {
                 email,
                 password
             });
-
             return res.status(200).json({
                 ...result,
                 success: true
