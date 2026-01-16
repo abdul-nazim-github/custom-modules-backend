@@ -122,7 +122,7 @@ export class AuthController {
     public updateUserPermissions = async (req: Request, res: Response) => {
         try {
             const { userId } = req.params;
-            const { action, permissions } = req.body;
+            const { permissions } = req.body;
             const updatedBy = req.user?.id;
 
             if (!updatedBy) {
@@ -134,7 +134,6 @@ export class AuthController {
 
             const result = await this.authService.updateUserPermissions({
                 userId,
-                action,
                 permissions,
                 updatedBy
             });

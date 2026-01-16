@@ -153,7 +153,6 @@ export class AuthService {
 
     async updateUserPermissions(payload: {
         userId: string;
-        action: 'add' | 'remove';
         permissions: string[];
         updatedBy: string;
     }) {
@@ -167,21 +166,13 @@ export class AuthService {
             throw new Error('User not found');
         }
 
-        let updatedPermissions = user.permissions || [];
-
-        if (payload.action === 'add') {
-            updatedPermissions = Array.from(new Set([...updatedPermissions, ...payload.permissions]));
-        } else {
-            updatedPermissions = updatedPermissions.filter(p => !payload.permissions.includes(p));
-        }
-
-        const updatedUser = await this.userRepository.updatePermissions(payload.userId, updatedPermissions);
+        const updatedUser = await this.userRepository.updatePermissions(payload.userId, payload.permissions);
 
         if (!updatedUser) {
             throw new Error('Failed to update user permissions');
         }
 
-        logger.info(`User ${payload.userId} permissions ${payload.action}ed by ${payload.updatedBy}`);
+        logger.info(`User ${payload.userId} permissions updated by ${payload.updatedBy}`);
 
         return {
             message: 'User permissions updated successfully',
