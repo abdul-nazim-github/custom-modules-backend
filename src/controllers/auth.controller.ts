@@ -102,7 +102,7 @@ export class AuthController {
             }
 
             const result = await this.authService.updateUserRole({
-                userId,
+                userId: userId as string,
                 newRole: role,
                 updatedBy
             });
