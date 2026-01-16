@@ -57,6 +57,14 @@ export class UserRepository {
             .exec();
     }
 
+    async updatePassword(userId: string, password: string) {
+        return UserModel.findByIdAndUpdate(
+            userId,
+            { password },
+            { new: true }
+        );
+    }
+
     async delete(userId: string) {
         return UserModel.findByIdAndDelete(userId);
     }

@@ -209,6 +209,25 @@ export class AuthService {
         };
     }
 
+    async resetPassword(payload: {
+        email: string;
+        password: string;
+    }) {
+        const user = await this.userRepository.findByEmail(payload.email);
+        if (!user) {
+            throw new Error('User with this email does not exist');
+        }
+
+        const hashedPassword = await bcrypt.hash(payload.password, 12);
+        await this.userRepository.updatePassword(user._id.toString(), hashedPassword);
+
+        logger.info(`Password reset successfully for user: ${payload.email}`);
+
+        return {
+            message: 'Password reset successfully'
+        };
+    }
+
     async deleteUser(payload: {
         userId: string;
         deletedBy: string;
