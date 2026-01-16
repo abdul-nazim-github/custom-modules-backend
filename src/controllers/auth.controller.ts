@@ -133,7 +133,7 @@ export class AuthController {
             }
 
             const result = await this.authService.updateUserPermissions({
-                userId,
+                userId: userId as string,
                 permissions,
                 updatedBy
             });
