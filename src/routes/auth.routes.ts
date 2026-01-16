@@ -20,6 +20,7 @@ export const createAuthRoutes = (
     router.post('/login', authController.login);
     router.post('/register', checkEmailExists(userRepository), validateBody(User), authController.register);
     router.post('/logout', authMiddleware(accessSecret, sessionRepository, userRepository), authController.logout);
+    router.post('/reset-password', authController.resetPassword);
 
     //  protected routes
     router.get('/profile',
@@ -61,6 +62,12 @@ export const createAuthRoutes = (
         authMiddleware(accessSecret, sessionRepository, userRepository),
         permissionMiddleware(Permission.MANAGE_PERMISSIONS),
         authController.updateUserPermissions
+    );
+
+    router.delete('/users/:userId',
+        authMiddleware(accessSecret, sessionRepository, userRepository),
+        permissionMiddleware(Permission.MANAGE_USERS),
+        authController.deleteUser
     );
 
     return router;

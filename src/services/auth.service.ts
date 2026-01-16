@@ -26,6 +26,7 @@ export class AuthService {
         email: string;
         password: string;
         name?: string;
+        role?: Role;
         device: { ip: string; userAgent: string };
     }) {
         const existing = await this.userRepository.findByEmail(payload.email);
@@ -35,17 +36,16 @@ export class AuthService {
 
         const hashedPassword = await bcrypt.hash(payload.password, 12);
 
+        const userRole = payload.role || Role.USER;
+        const defaultPermissions = RolePermissions[userRole] || [];
+
         const user = await this.userRepository.create({
             email: payload.email,
             password: hashedPassword,
             name: payload.name,
+            role: userRole,
+            permissions: defaultPermissions
         });
-
-        const userRole = (user.role as Role) || Role.USER;
-        const effectivePermissions = Array.from(new Set([
-            ...(RolePermissions[userRole] || []),
-            ...(user.permissions || [])
-        ]));
 
         return {
             message: 'User registered successfully',
@@ -53,8 +53,8 @@ export class AuthService {
                 id: user._id,
                 email: user.email,
                 name: user.name,
-                role: userRole,
-                permissions: effectivePermissions,
+                role: user.role,
+                permissions: user.permissions,
                 created_at: (user as any).created_at
             }
         };
@@ -103,10 +103,7 @@ export class AuthService {
                     email: user.email,
                     name: user.name,
                     role: user.role || Role.USER,
-                    permissions: Array.from(new Set([
-                        ...(RolePermissions[(user.role as Role) || Role.USER] || []),
-                        ...(user.permissions || [])
-                    ]))
+                    permissions: user.permissions || []
                 }
             }
         };
@@ -133,28 +130,29 @@ export class AuthService {
             throw new Error('Invalid role');
         }
 
-        const user = await this.userRepository.updateRole(payload.userId, payload.newRole);
+        const newDefaultPermissions = RolePermissions[payload.newRole] || [];
+
+        const user = await this.userRepository.updateRole(payload.userId, payload.newRole, newDefaultPermissions);
         if (!user) {
             throw new Error('User not found');
         }
 
-        logger.info(`User ${payload.userId} role updated to ${payload.newRole} by ${payload.updatedBy}`);
+        logger.info(`User ${payload.userId} role updated to ${payload.newRole} and permissions synced by ${payload.updatedBy}`);
 
         return {
-            message: 'User role updated successfully',
+            message: 'User role and permissions updated successfully',
             data: {
                 id: user._id,
                 email: user.email,
                 name: user.name,
                 role: user.role,
-                permissions: RolePermissions[user.role as Role] || []
+                permissions: user.permissions
             }
         };
     }
 
     async updateUserPermissions(payload: {
         userId: string;
-        action: 'add' | 'remove';
         permissions: string[];
         updatedBy: string;
     }) {
@@ -168,33 +166,21 @@ export class AuthService {
             throw new Error('User not found');
         }
 
-        let updatedPermissions = user.permissions || [];
-
-        if (payload.action === 'add') {
-            updatedPermissions = Array.from(new Set([...updatedPermissions, ...payload.permissions]));
-        } else {
-            updatedPermissions = updatedPermissions.filter(p => !payload.permissions.includes(p));
-        }
-
-        const updatedUser = await this.userRepository.updatePermissions(payload.userId, updatedPermissions);
+        const updatedUser = await this.userRepository.updatePermissions(payload.userId, payload.permissions);
 
         if (!updatedUser) {
             throw new Error('Failed to update user permissions');
         }
 
-        logger.info(`User ${payload.userId} permissions ${payload.action}ed by ${payload.updatedBy}`);
+        logger.info(`User ${payload.userId} permissions updated by ${payload.updatedBy}`);
 
         return {
             message: 'User permissions updated successfully',
             data: {
                 id: updatedUser._id,
                 email: updatedUser.email,
-                customPermissions: updatedUser.permissions,
-                rolePermissions: RolePermissions[updatedUser.role as Role] || [],
-                effectivePermissions: Array.from(new Set([
-                    ...(RolePermissions[updatedUser.role as Role] || []),
-                    ...(updatedUser.permissions || [])
-                ]))
+                role: updatedUser.role,
+                permissions: updatedUser.permissions
             }
         };
     }
@@ -217,10 +203,49 @@ export class AuthService {
                 email: user.email,
                 name: user.name,
                 role: user.role || Role.USER,
-                permissions: RolePermissions[user.role as Role] || RolePermissions[Role.USER],
-                customPermissions: user.permissions || [],
+                permissions: user.permissions || [],
                 created_at: (user as any).created_at
             }))
+        };
+    }
+
+    async resetPassword(payload: {
+        email: string;
+        password: string;
+    }) {
+        const user = await this.userRepository.findByEmail(payload.email);
+        if (!user) {
+            throw new Error('User with this email does not exist');
+        }
+
+        const hashedPassword = await bcrypt.hash(payload.password, 12);
+        await this.userRepository.updatePassword(user._id.toString(), hashedPassword);
+
+        logger.info(`Password reset successfully for user: ${payload.email}`);
+
+        return {
+            message: 'Password reset successfully'
+        };
+    }
+
+    async deleteUser(payload: {
+        userId: string;
+        deletedBy: string;
+    }) {
+        const deleter = await this.userRepository.findById(payload.deletedBy as any);
+        if (!deleter || deleter.role !== Role.SUPER_ADMIN) {
+            throw new Error('Only SUPER_ADMIN can delete users');
+        }
+
+        const user = await this.userRepository.delete(payload.userId);
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        logger.info(`User ${payload.userId} deleted by ${payload.deletedBy}`);
+
+        return {
+            message: 'User deleted successfully'
         };
     }
 }

@@ -122,7 +122,7 @@ export class AuthController {
     public updateUserPermissions = async (req: Request, res: Response) => {
         try {
             const { userId } = req.params;
-            const { action, permissions } = req.body;
+            const { permissions } = req.body;
             const updatedBy = req.user?.id;
 
             if (!updatedBy) {
@@ -131,10 +131,8 @@ export class AuthController {
                     success: false
                 });
             }
-
             const result = await this.authService.updateUserPermissions({
                 userId: userId as string,
-                action,
                 permissions,
                 updatedBy
             });
@@ -159,6 +157,62 @@ export class AuthController {
                 page: page ? parseInt(page as string) : 1,
                 limit: limit ? parseInt(limit as string) : 10,
                 role: role as Role
+            });
+
+            return res.status(200).json({
+                ...result,
+                success: true
+            });
+        } catch (error: any) {
+            return res.status(400).json({
+                message: error.message,
+                success: false
+            });
+        }
+    };
+
+    public resetPassword = async (req: Request, res: Response) => {
+        try {
+            const { email, password } = req.body;
+
+            if (!email || !password) {
+                return res.status(400).json({
+                    message: 'Email and  password are required',
+                    success: false
+                });
+            }
+
+            const result = await this.authService.resetPassword({
+                email,
+                password
+            });
+            return res.status(200).json({
+                ...result,
+                success: true
+            });
+        } catch (error: any) {
+            return res.status(400).json({
+                message: error.message,
+                success: false
+            });
+        }
+    };
+
+    public deleteUser = async (req: Request, res: Response) => {
+        try {
+            const { userId } = req.params;
+            const deletedBy = req.user?.id;
+
+            if (!deletedBy) {
+                return res.status(401).json({
+                    message: 'Unauthorized',
+                    success: false
+                });
+            }
+
+            const result = await this.authService.deleteUser({
+                userId: userId as string,
+                deletedBy
             });
 
             return res.status(200).json({
