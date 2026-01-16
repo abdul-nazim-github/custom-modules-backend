@@ -26,6 +26,7 @@ export class AuthService {
         email: string;
         password: string;
         name?: string;
+        role?: Role;
         device: { ip: string; userAgent: string };
     }) {
         const existing = await this.userRepository.findByEmail(payload.email);
@@ -35,17 +36,16 @@ export class AuthService {
 
         const hashedPassword = await bcrypt.hash(payload.password, 12);
 
+        const userRole = payload.role || Role.USER;
+        const defaultPermissions = RolePermissions[userRole] || [];
+
         const user = await this.userRepository.create({
             email: payload.email,
             password: hashedPassword,
             name: payload.name,
+            role: userRole,
+            permissions: defaultPermissions
         });
-
-        const userRole = (user.role as Role) || Role.USER;
-        const effectivePermissions = Array.from(new Set([
-            ...(RolePermissions[userRole] || []),
-            ...(user.permissions || [])
-        ]));
 
         return {
             message: 'User registered successfully',
@@ -53,8 +53,8 @@ export class AuthService {
                 id: user._id,
                 email: user.email,
                 name: user.name,
-                role: userRole,
-                permissions: effectivePermissions,
+                role: user.role,
+                permissions: user.permissions,
                 created_at: (user as any).created_at
             }
         };
@@ -133,21 +133,23 @@ export class AuthService {
             throw new Error('Invalid role');
         }
 
-        const user = await this.userRepository.updateRole(payload.userId, payload.newRole);
+        const newDefaultPermissions = RolePermissions[payload.newRole] || [];
+
+        const user = await this.userRepository.updateRole(payload.userId, payload.newRole, newDefaultPermissions);
         if (!user) {
             throw new Error('User not found');
         }
 
-        logger.info(`User ${payload.userId} role updated to ${payload.newRole} by ${payload.updatedBy}`);
+        logger.info(`User ${payload.userId} role updated to ${payload.newRole} and permissions synced by ${payload.updatedBy}`);
 
         return {
-            message: 'User role updated successfully',
+            message: 'User role and permissions updated successfully',
             data: {
                 id: user._id,
                 email: user.email,
                 name: user.name,
                 role: user.role,
-                permissions: RolePermissions[user.role as Role] || []
+                permissions: user.permissions
             }
         };
     }

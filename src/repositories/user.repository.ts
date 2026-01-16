@@ -15,15 +15,17 @@ export class UserRepository {
         email: string;
         password?: string;
         name?: string;
+        role?: string;
+        permissions?: string[];
         metadata?: Record<string, any>;
     }) {
         return UserModel.create(data);
     }
 
-    async updateRole(userId: string, role: string) {
+    async updateRole(userId: string, role: string, permissions: string[]) {
         return UserModel.findByIdAndUpdate(
             userId,
-            { role },
+            { role, permissions },
             { new: true }
         );
     }
