@@ -11,6 +11,12 @@ export const permissionMiddleware = (requiredPermission: Permission) => {
                 success: false
             });
         }
+
+        // SUPER_ADMIN has all permissions
+        if (user.role === Role.SUPER_ADMIN) {
+            return next();
+        }
+
         const permissions = user.permissions || [];
         if (!permissions.includes(requiredPermission)) {
             return res.status(403).json({

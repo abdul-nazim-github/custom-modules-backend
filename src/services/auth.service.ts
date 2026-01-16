@@ -223,4 +223,25 @@ export class AuthService {
             }))
         };
     }
+
+    async deleteUser(payload: {
+        userId: string;
+        deletedBy: string;
+    }) {
+        const deleter = await this.userRepository.findById(payload.deletedBy as any);
+        if (!deleter || deleter.role !== Role.SUPER_ADMIN) {
+            throw new Error('Only SUPER_ADMIN can delete users');
+        }
+
+        const user = await this.userRepository.delete(payload.userId);
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        logger.info(`User ${payload.userId} deleted by ${payload.deletedBy}`);
+
+        return {
+            message: 'User deleted successfully'
+        };
+    }
 }

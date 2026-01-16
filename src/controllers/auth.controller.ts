@@ -173,4 +173,33 @@ export class AuthController {
         }
     };
 
+    public deleteUser = async (req: Request, res: Response) => {
+        try {
+            const { userId } = req.params;
+            const deletedBy = req.user?.id;
+
+            if (!deletedBy) {
+                return res.status(401).json({
+                    message: 'Unauthorized',
+                    success: false
+                });
+            }
+
+            const result = await this.authService.deleteUser({
+                userId: userId as string,
+                deletedBy
+            });
+
+            return res.status(200).json({
+                ...result,
+                success: true
+            });
+        } catch (error: any) {
+            return res.status(400).json({
+                message: error.message,
+                success: false
+            });
+        }
+    };
+
 }
