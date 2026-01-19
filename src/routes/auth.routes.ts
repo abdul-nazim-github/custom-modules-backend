@@ -56,5 +56,11 @@ export const createAuthRoutes = (
         authController.updateUserPermissions
     );
 
+    router.delete('/users/:userId',
+        authMiddleware(accessSecret, sessionRepository, userRepository),
+        permissionMiddleware(Permission.MANAGE_USERS),
+        authController.deleteUser
+    );
+
     return router;
 };

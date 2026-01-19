@@ -46,4 +46,8 @@ export class UserRepository {
             .select('-password')
             .exec();
     }
+
+    async delete(userId: string) {
+        return UserModel.findByIdAndDelete(userId);
+    }
 }
