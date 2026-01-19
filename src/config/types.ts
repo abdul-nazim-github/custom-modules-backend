@@ -5,6 +5,9 @@ export interface AuthConfig {
         accessTTL: string;
         refreshSecret: string;
         refreshTTLms: number;
+        resetSecret: string;
+        resetTTL: string;
     };
     sessionSecret: string;
+    frontendUrl: string;
 }

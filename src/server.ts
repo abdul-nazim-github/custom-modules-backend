@@ -18,9 +18,12 @@ const authConfig = {
         accessSecret: process.env.JWT_ACCESS_SECRET || 'access-secret',
         accessTTL: process.env.JWT_ACCESS_TTL || '15m',
         refreshSecret: process.env.JWT_REFRESH_SECRET || 'refresh-secret',
-        refreshTTLms: parseInt(process.env.JWT_REFRESH_TTL_MS || '604800000')
+        refreshTTLms: parseInt(process.env.JWT_REFRESH_TTL_MS || '604800000'),
+        resetSecret: process.env.JWT_RESET_SECRET || 'reset-secret',
+        resetTTL: process.env.JWT_RESET_TTL || '1h'
     },
-    sessionSecret: process.env.SESSION_SECRET || 'session-secret'
+    sessionSecret: process.env.SESSION_SECRET || 'session-secret',
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000'
 };
 
 const authModule = AuthModule.init(authConfig);

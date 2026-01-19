@@ -209,23 +209,58 @@ export class AuthService {
         };
     }
 
-    async resetPassword(payload: {
-        email: string;
-        password: string;
-    }) {
+    async forgotPassword(payload: { email: string }) {
         const user = await this.userRepository.findByEmail(payload.email);
         if (!user) {
-            throw new Error('User with this email does not exist');
+            // For security reasons, don't reveal if user exists
+            return { message: 'If an account with that email exists, a reset link has been sent.' };
         }
 
-        const hashedPassword = await bcrypt.hash(payload.password, 12);
-        await this.userRepository.updatePassword(user._id.toString(), hashedPassword);
+        const resetToken = jwt.sign(
+            { userId: user._id, email: user.email, type: 'reset' },
+            this.config.jwt.resetSecret,
+            { expiresIn: this.config.jwt.resetTTL as any }
+        );
 
-        logger.info(`Password reset successfully for user: ${payload.email}`);
+        const resetLink = `${this.config.frontendUrl}/reset-password?token=${resetToken}`;
+
+        // TODO: Integrate with an actual email service
+        logger.info(`Password reset link for ${payload.email}: ${resetLink}`);
 
         return {
-            message: 'Password reset successfully'
+            message: 'If an account with that email exists, a reset link has been sent.',
+            // For development/testing purposes, we might want to return the link if in dev mode
+            // link: resetLink 
         };
+    }
+
+    async resetPassword(payload: {
+        token: string;
+        password: string;
+    }) {
+        try {
+            const decoded = jwt.verify(payload.token, this.config.jwt.resetSecret) as any;
+
+            if (decoded.type !== 'reset') {
+                throw new Error('Invalid token type');
+            }
+
+            const hashedPassword = await bcrypt.hash(payload.password, 12);
+            const user = await this.userRepository.updatePassword(decoded.userId, hashedPassword);
+
+            if (!user) {
+                throw new Error('User not found');
+            }
+
+            logger.info(`Password reset successfully for user: ${decoded.email}`);
+
+            return {
+                message: 'Password has been reset successfully'
+            };
+        } catch (error: any) {
+            logger.error(`Password reset failed: ${error.message}`);
+            throw new Error('Invalid or expired reset token');
+        }
     }
 
     async deleteUser(payload: {
