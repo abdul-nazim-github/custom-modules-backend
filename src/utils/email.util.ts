@@ -29,7 +29,6 @@ export const sendResetEmail = async (config: any, to: string, resetLink: string)
             </div>
         `,
     };
-
     try {
         await transporter.sendMail(mailOptions);
         logger.info(`Reset email sent to ${to}`);
