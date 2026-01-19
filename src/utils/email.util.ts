@@ -2,14 +2,23 @@ import nodemailer from 'nodemailer';
 import { logger } from './logger.js';
 
 export const sendResetEmail = async (config: any, to: string, resetLink: string) => {
+    const isGmail = config.host.includes('gmail.com');
+
     const transporter = nodemailer.createTransport({
-        host: config.host,
-        port: config.port,
-        secure: config.port === 465,
+        ...(isGmail ? { service: 'gmail' } : {
+            host: config.host,
+            port: config.port,
+            secure: config.port === 465,
+        }),
         auth: {
             user: config.user,
             pass: config.pass,
         },
+        debug: true, 
+        logger: true,
+        connectionTimeout: 30000,
+        greetingTimeout: 30000,
+        socketTimeout: 45000,
     });
 
     const mailOptions = {
