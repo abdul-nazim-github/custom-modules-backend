@@ -6,6 +6,7 @@ import { UserRepository } from '../repositories/user.repository.js';
 import { SessionService } from './session.service.js';
 import { logger } from '../utils/logger.js';
 import { Role, RolePermissions } from '../config/roles.js';
+import { sendResetEmail } from '../utils/email.util.js';
 
 export class AuthService {
     private config: AuthConfig;
@@ -212,7 +213,7 @@ export class AuthService {
     async forgotPassword(payload: { email: string }) {
         const user = await this.userRepository.findByEmail(payload.email);
         if (!user) {
-            return { message: 'If an account with that email exists, a reset link has been sent.' };
+            return { message: 'User does not exists.' };
         }
         const resetToken = jwt.sign(
             { userId: user._id, email: user.email, type: 'reset' },
@@ -220,7 +221,8 @@ export class AuthService {
             { expiresIn: this.config.jwt.resetTTL as any }
         );
         const resetLink = `${this.config.frontendUrl}/reset-password?token=${resetToken}`;
-        logger.info(`Password reset link for ${payload.email}: ${resetLink}`);
+
+        await sendResetEmail(this.config.email, payload.email, resetLink);
 
         return {
             message: 'If an account with that email exists, a reset link has been sent.',
@@ -233,7 +235,6 @@ export class AuthService {
     }) {
         try {
             const decoded = jwt.verify(payload.token, this.config.jwt.resetSecret) as any;
-
             if (decoded.type !== 'reset') {
                 throw new Error('Invalid token type');
             }

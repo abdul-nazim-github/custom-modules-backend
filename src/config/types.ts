@@ -10,4 +10,11 @@ export interface AuthConfig {
     };
     sessionSecret: string;
     frontendUrl: string;
+    email: {
+        host: string;
+        port: number;
+        user: string;
+        pass: string;
+        from: string;
+    };
 }

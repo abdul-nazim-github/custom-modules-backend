@@ -23,7 +23,14 @@ const authConfig = {
         resetTTL: process.env.JWT_RESET_TTL || '1h'
     },
     sessionSecret: process.env.SESSION_SECRET || 'session-secret',
-    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000'
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+    email: {
+        host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+        port: parseInt(process.env.EMAIL_PORT || '587'),
+        user: process.env.EMAIL_USER || '',
+        pass: process.env.EMAIL_PASS || '',
+        from: process.env.EMAIL_FROM || '"Auth Service" <no-reply@example.com>'
+    }
 };
 
 const authModule = AuthModule.init(authConfig);
