@@ -211,22 +211,28 @@ export class AuthService {
     }
 
     async forgotPassword(payload: { email: string }) {
-        const user = await this.userRepository.findByEmail(payload.email);
-        if (!user) {
-            return { message: 'User does not exists.' };
+        try {
+            const user = await this.userRepository.findByEmail(payload.email);
+            if (!user) {
+                return { message: 'User does not exists.' };
+            }
+            const resetToken = jwt.sign(
+                { userId: user._id, email: user.email, type: 'reset' },
+                this.config.jwt.resetSecret,
+                { expiresIn: this.config.jwt.resetTTL as any }
+            );
+            const resetLink = `${this.config.frontendUrl}/reset-password?token=${encodeURIComponent(resetToken)}&email=${encodeURIComponent(payload.email)}`;
+            console.log("resetLink", resetLink);
+            await sendResetEmail(this.config.email, payload.email, resetLink);
+            return {
+                message: 'Email has been sent.',
+            };
+        } catch (error: any) {
+            console.error("Error sending reset email:", error);
+            return {
+                message: 'Failed to send reset email.',
+            };
         }
-        const resetToken = jwt.sign(
-            { userId: user._id, email: user.email, type: 'reset' },
-            this.config.jwt.resetSecret,
-            { expiresIn: this.config.jwt.resetTTL as any }
-        );
-        const resetLink = `${this.config.frontendUrl}/reset-password?token=${resetToken}`;
-
-        await sendResetEmail(this.config.email, payload.email, resetLink);
-
-        return {
-            message: 'If an account with that email exists, a reset link has been sent.',
-        };
     }
 
     async resetPassword(payload: {
@@ -243,8 +249,6 @@ export class AuthService {
             if (!user) {
                 throw new Error('User not found');
             }
-            logger.info(`Password reset successfully for user: ${decoded.email}`);
-
             return {
                 message: 'Password has been reset successfully'
             };

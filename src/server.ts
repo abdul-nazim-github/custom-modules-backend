@@ -20,7 +20,7 @@ const authConfig = {
         refreshSecret: process.env.JWT_REFRESH_SECRET || 'refresh-secret',
         refreshTTLms: parseInt(process.env.JWT_REFRESH_TTL_MS || '604800000'),
         resetSecret: process.env.JWT_RESET_SECRET || 'reset-secret',
-        resetTTL: process.env.JWT_RESET_TTL || '1h'
+        resetTTL: process.env.JWT_RESET_TTL || '15m'
     },
     sessionSecret: process.env.SESSION_SECRET || 'session-secret',
     frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
