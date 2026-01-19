@@ -266,7 +266,6 @@ export class AuthService {
         if (!user) {
             throw new Error('User not found');
         }
-        logger.info(`User ${payload.userId} deleted by ${payload.deletedBy}`);
         return {
             message: 'User deleted successfully'
         };
