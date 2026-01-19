@@ -20,7 +20,6 @@ export const sendResetEmail = async (config: any, to: string, resetLink: string)
         greetingTimeout: 30000,
         socketTimeout: 45000,
     });
-
     const mailOptions = {
         from: config.from,
         to,
