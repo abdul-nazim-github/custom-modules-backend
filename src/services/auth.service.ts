@@ -222,7 +222,6 @@ export class AuthService {
                 { expiresIn: this.config.jwt.resetTTL as any }
             );
             const resetLink = `${this.config.frontendUrl}/reset-password?token=${encodeURIComponent(resetToken)}&email=${encodeURIComponent(payload.email)}`;
-            console.log("resetLink", resetLink);
             await sendResetEmail(this.config.email, payload.email, resetLink);
             return {
                 message: 'Email has been sent.',
