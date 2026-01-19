@@ -172,9 +172,6 @@ export class AuthService {
         if (!updatedUser) {
             throw new Error('Failed to update user permissions');
         }
-
-        logger.info(`User ${payload.userId} permissions updated by ${payload.updatedBy}`);
-
         return {
             message: 'User permissions updated successfully',
             data: {
