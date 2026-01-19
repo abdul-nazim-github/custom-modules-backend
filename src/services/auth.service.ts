@@ -212,25 +212,18 @@ export class AuthService {
     async forgotPassword(payload: { email: string }) {
         const user = await this.userRepository.findByEmail(payload.email);
         if (!user) {
-            // For security reasons, don't reveal if user exists
             return { message: 'If an account with that email exists, a reset link has been sent.' };
         }
-
         const resetToken = jwt.sign(
             { userId: user._id, email: user.email, type: 'reset' },
             this.config.jwt.resetSecret,
             { expiresIn: this.config.jwt.resetTTL as any }
         );
-
         const resetLink = `${this.config.frontendUrl}/reset-password?token=${resetToken}`;
-
-        // TODO: Integrate with an actual email service
         logger.info(`Password reset link for ${payload.email}: ${resetLink}`);
 
         return {
             message: 'If an account with that email exists, a reset link has been sent.',
-            // For development/testing purposes, we might want to return the link if in dev mode
-            // link: resetLink 
         };
     }
 
@@ -244,14 +237,11 @@ export class AuthService {
             if (decoded.type !== 'reset') {
                 throw new Error('Invalid token type');
             }
-
             const hashedPassword = await bcrypt.hash(payload.password, 12);
             const user = await this.userRepository.updatePassword(decoded.userId, hashedPassword);
-
             if (!user) {
                 throw new Error('User not found');
             }
-
             logger.info(`Password reset successfully for user: ${decoded.email}`);
 
             return {
@@ -271,14 +261,11 @@ export class AuthService {
         if (!deleter || deleter.role !== Role.SUPER_ADMIN) {
             throw new Error('Only SUPER_ADMIN can delete users');
         }
-
         const user = await this.userRepository.delete(payload.userId);
         if (!user) {
             throw new Error('User not found');
         }
-
         logger.info(`User ${payload.userId} deleted by ${payload.deletedBy}`);
-
         return {
             message: 'User deleted successfully'
         };
