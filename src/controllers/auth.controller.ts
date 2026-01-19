@@ -171,19 +171,42 @@ export class AuthController {
         }
     };
 
+    public forgotPassword = async (req: Request, res: Response) => {
+        try {
+            const { email } = req.body;
+            if (!email) {
+                return res.status(400).json({
+                    message: 'Email is required',
+                    success: false
+                });
+            }
+
+            const result = await this.authService.forgotPassword({ email });
+            return res.status(200).json({
+                ...result,
+                success: true
+            });
+        } catch (error: any) {
+            return res.status(400).json({
+                message: error.message,
+                success: false
+            });
+        }
+    };
+
     public resetPassword = async (req: Request, res: Response) => {
         try {
-            const { email, password } = req.body;
+            const { token, password } = req.body;
 
-            if (!email || !password) {
+            if (!token || !password) {
                 return res.status(400).json({
-                    message: 'Email and  password are required',
+                    message: 'Token and password are required',
                     success: false
                 });
             }
 
             const result = await this.authService.resetPassword({
-                email,
+                token,
                 password
             });
             return res.status(200).json({
