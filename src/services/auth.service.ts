@@ -6,6 +6,7 @@ import { UserRepository } from '../repositories/user.repository.js';
 import { SessionService } from './session.service.js';
 import { logger } from '../utils/logger.js';
 import { Role, RolePermissions } from '../config/roles.js';
+import { sendResetEmail } from '../utils/email.util.js';
 
 export class AuthService {
     private config: AuthConfig;
@@ -171,9 +172,6 @@ export class AuthService {
         if (!updatedUser) {
             throw new Error('Failed to update user permissions');
         }
-
-        logger.info(`User ${payload.userId} permissions updated by ${payload.updatedBy}`);
-
         return {
             message: 'User permissions updated successfully',
             data: {
@@ -209,23 +207,51 @@ export class AuthService {
         };
     }
 
+    async forgotPassword(payload: { email: string }) {
+        try {
+            const user = await this.userRepository.findByEmail(payload.email);
+            if (!user) {
+                return { message: 'User does not exists.' };
+            }
+            const resetToken = jwt.sign(
+                { userId: user._id, email: user.email, type: 'reset' },
+                this.config.jwt.resetSecret,
+                { expiresIn: this.config.jwt.resetTTL as any }
+            );
+            const resetLink = `${this.config.frontendUrl}/reset-password?token=${encodeURIComponent(resetToken)}&email=${encodeURIComponent(payload.email)}`;
+            await sendResetEmail(this.config.email, payload.email, resetLink);
+            return {
+                message: 'Email has been sent.',
+            };
+        } catch (error: any) {
+            console.error("Error sending reset email:", error);
+            return {
+                message: 'Failed to send reset email.',
+            };
+        }
+    }
+
     async resetPassword(payload: {
-        email: string;
+        token: string;
         password: string;
     }) {
-        const user = await this.userRepository.findByEmail(payload.email);
-        if (!user) {
-            throw new Error('User with this email does not exist');
+        try {
+            const decoded = jwt.verify(payload.token, this.config.jwt.resetSecret) as any;
+            if (decoded.type !== 'reset') {
+                throw new Error('Invalid token type');
+            }
+            const hashedPassword = await bcrypt.hash(payload.password, 12);
+            const user = await this.userRepository.updatePassword(decoded.userId, hashedPassword);
+            if (!user) {
+                throw new Error('User not found');
+            }
+            return {
+                message: 'Password has been reset successfully'
+            };
+        } catch (error: any) {
+            logger.error(`Password reset failed: ${error.message}`);
+            throw new Error('Invalid or expired reset token');
         }
-
-        const hashedPassword = await bcrypt.hash(payload.password, 12);
-        await this.userRepository.updatePassword(user._id.toString(), hashedPassword);
-
-        logger.info(`Password reset successfully for user: ${payload.email}`);
-
-        return {
-            message: 'Password reset successfully'
-        };
     }
 
     async deleteUser(payload: {
@@ -236,14 +262,10 @@ export class AuthService {
         if (!deleter || deleter.role !== Role.SUPER_ADMIN) {
             throw new Error('Only SUPER_ADMIN can delete users');
         }
-
         const user = await this.userRepository.delete(payload.userId);
         if (!user) {
             throw new Error('User not found');
         }
-
-        logger.info(`User ${payload.userId} deleted by ${payload.deletedBy}`);
-
         return {
             message: 'User deleted successfully'
         };
