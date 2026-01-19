@@ -98,7 +98,6 @@ export class AuthService {
             limit: payload.limit || 10,
             role: payload.role
         });
-
         return {
             message: 'Users retrieved successfully',
             data: users.map(user => ({
