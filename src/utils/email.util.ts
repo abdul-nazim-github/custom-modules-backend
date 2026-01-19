@@ -2,24 +2,26 @@ import nodemailer from 'nodemailer';
 import { logger } from './logger.js';
 
 export const sendResetEmail = async (config: any, to: string, resetLink: string) => {
-    const isGmail = config.host.includes('gmail.com');
-
+    // Using explicit configuration for better reliability on cloud platforms
     const transporter = nodemailer.createTransport({
-        ...(isGmail ? { service: 'gmail' } : {
-            host: config.host,
-            port: config.port,
-            secure: config.port === 465,
-        }),
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
         auth: {
             user: config.user,
             pass: config.pass,
         },
+        tls: {
+            rejectUnauthorized: false, // Helps with some network-level certificate issues
+            minVersion: 'TLSv1.2'
+        },
         debug: true, 
         logger: true,
-        connectionTimeout: 30000,
-        greetingTimeout: 30000,
-        socketTimeout: 45000,
+        connectionTimeout: 60000, 
+        greetingTimeout: 60000,
+        socketTimeout: 60000,
     });
+
     const mailOptions = {
         from: config.from,
         to,
@@ -37,6 +39,7 @@ export const sendResetEmail = async (config: any, to: string, resetLink: string)
             </div>
         `,
     };
+
     try {
         await transporter.sendMail(mailOptions);
         logger.info(`Reset email sent to ${to}`);
