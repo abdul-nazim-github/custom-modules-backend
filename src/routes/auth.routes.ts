@@ -1,14 +1,10 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller.js';
-import { validateBody } from '../middlewares/validation.middleware.js';
-import { User } from '../models/user.model.js';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
 import { SessionRepository } from '../repositories/session.repository.js';
 import { UserRepository } from '../repositories/user.repository.js';
-import { roleMiddleware } from '../middlewares/role.middleware.js';
 import { permissionMiddleware } from '../middlewares/permission.middleware.js';
-import { Role, Permission } from '../config/roles.js';
-import { checkEmailExists } from '../middlewares/user.middleware.js';
+import { Permission } from '../config/roles.js';
 export const createAuthRoutes = (
     authController: AuthController,
     accessSecret: string,
@@ -16,11 +12,6 @@ export const createAuthRoutes = (
     userRepository: UserRepository
 ): Router => {
     const router = Router();
-
-    router.post('/login', authController.login);
-    router.post('/register', checkEmailExists(userRepository), validateBody(User), authController.register);
-    router.post('/logout', authMiddleware(accessSecret, sessionRepository, userRepository), authController.logout);
-    router.post('/reset-password', authController.resetPassword);
 
     //  protected routes
     router.get('/profile',
@@ -46,6 +37,7 @@ export const createAuthRoutes = (
         permissionMiddleware(Permission.SECURITY),
         (req, res) => res.json({ message: 'Welcome to Security', success: true })
     );
+
     router.get('/users',
         authMiddleware(accessSecret, sessionRepository, userRepository),
         permissionMiddleware(Permission.MANAGE_USERS),
@@ -62,12 +54,6 @@ export const createAuthRoutes = (
         authMiddleware(accessSecret, sessionRepository, userRepository),
         permissionMiddleware(Permission.MANAGE_PERMISSIONS),
         authController.updateUserPermissions
-    );
-
-    router.delete('/users/:userId',
-        authMiddleware(accessSecret, sessionRepository, userRepository),
-        permissionMiddleware(Permission.MANAGE_USERS),
-        authController.deleteUser
     );
 
     return router;

@@ -1,6 +1,3 @@
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import { Types } from 'mongoose';
 import { AuthConfig } from '../config/types.js';
 import { UserRepository } from '../repositories/user.repository.js';
 import { SessionService } from './session.service.js';
@@ -20,100 +17,6 @@ export class AuthService {
         this.config = config;
         this.userRepository = userRepository;
         this.sessionService = sessionService;
-    }
-
-    async register(payload: {
-        email: string;
-        password: string;
-        name?: string;
-        role?: Role;
-        device: { ip: string; userAgent: string };
-    }) {
-        const existing = await this.userRepository.findByEmail(payload.email);
-        if (existing) {
-            throw new Error('User already exists');
-        }
-
-        const hashedPassword = await bcrypt.hash(payload.password, 12);
-
-        const userRole = payload.role || Role.USER;
-        const defaultPermissions = RolePermissions[userRole] || [];
-
-        const user = await this.userRepository.create({
-            email: payload.email,
-            password: hashedPassword,
-            name: payload.name,
-            role: userRole,
-            permissions: defaultPermissions
-        });
-
-        return {
-            message: 'User registered successfully',
-            data: {
-                id: user._id,
-                email: user.email,
-                name: user.name,
-                role: user.role,
-                permissions: user.permissions,
-                created_at: (user as any).created_at
-            }
-        };
-    }
-
-    async login(payload: {
-        email: string;
-        password: string;
-        device: { ip: string; userAgent: string };
-    }) {
-        const user = await this.userRepository.findByEmail(payload.email);
-        if (!user) {
-            logger.warn(`Failed login attempt: User not found for email ${payload.email}`);
-            throw new Error('Invalid credentials');
-        }
-
-        if (!user.password) {
-            logger.warn(`Failed login attempt: User ${payload.email} has no password set`);
-            throw new Error('Invalid credentials');
-        }
-
-        const isValid = await bcrypt.compare(payload.password, user.password);
-        if (!isValid) {
-            logger.warn(`Failed login attempt: Incorrect password for user ${payload.email}`);
-            throw new Error('Invalid credentials');
-        }
-
-        const { session, refreshToken } = await this.sessionService.createSession(
-            user._id as Types.ObjectId,
-            payload.device
-        );
-
-        const accessToken = jwt.sign(
-            { userId: user._id, sessionId: session._id },
-            this.config.jwt.accessSecret,
-            { expiresIn: this.config.jwt.accessTTL as any }
-        );
-
-        return {
-            message: 'Login successful',
-            data: {
-                accessToken,
-                refreshToken,
-                user: {
-                    id: user._id,
-                    email: user.email,
-                    name: user.name,
-                    role: user.role || Role.USER,
-                    permissions: user.permissions || []
-                }
-            }
-        };
-    }
-
-    async logout(payload: { sessionId: string }) {
-        await this.sessionService.deactivateSession(payload.sessionId);
-        return {
-            message: 'Logged out successfully'
-        };
     }
 
     async updateUserRole(payload: {
@@ -206,46 +109,6 @@ export class AuthService {
                 permissions: user.permissions || [],
                 created_at: (user as any).created_at
             }))
-        };
-    }
-
-    async resetPassword(payload: {
-        email: string;
-        password: string;
-    }) {
-        const user = await this.userRepository.findByEmail(payload.email);
-        if (!user) {
-            throw new Error('User with this email does not exist');
-        }
-
-        const hashedPassword = await bcrypt.hash(payload.password, 12);
-        await this.userRepository.updatePassword(user._id.toString(), hashedPassword);
-
-        logger.info(`Password reset successfully for user: ${payload.email}`);
-
-        return {
-            message: 'Password reset successfully'
-        };
-    }
-
-    async deleteUser(payload: {
-        userId: string;
-        deletedBy: string;
-    }) {
-        const deleter = await this.userRepository.findById(payload.deletedBy as any);
-        if (!deleter || deleter.role !== Role.SUPER_ADMIN) {
-            throw new Error('Only SUPER_ADMIN can delete users');
-        }
-
-        const user = await this.userRepository.delete(payload.userId);
-        if (!user) {
-            throw new Error('User not found');
-        }
-
-        logger.info(`User ${payload.userId} deleted by ${payload.deletedBy}`);
-
-        return {
-            message: 'User deleted successfully'
         };
     }
 }
