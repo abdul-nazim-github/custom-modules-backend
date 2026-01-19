@@ -2,25 +2,25 @@ import nodemailer from 'nodemailer';
 import { logger } from './logger.js';
 
 export const sendResetEmail = async (config: any, to: string, resetLink: string) => {
-    // Using explicit configuration for better reliability on cloud platforms
+    // Simplest possible Gmail configuration - let nodemailer handle the defaults
     const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
+        service: 'gmail',
         auth: {
             user: config.user,
             pass: config.pass,
         },
-        tls: {
-            rejectUnauthorized: false, // Helps with some network-level certificate issues
-            minVersion: 'TLSv1.2'
-        },
-        debug: true, 
+        debug: true,
         logger: true,
-        connectionTimeout: 60000, 
+        connectionTimeout: 60000,
         greetingTimeout: 60000,
         socketTimeout: 60000,
     });
+    try {
+        await transporter.verify();
+        logger.info('SMTP connection verified successfully');
+    } catch (verifyError) {
+        logger.error(`SMTP Verification Failed: ${verifyError}`);
+    }
 
     const mailOptions = {
         from: config.from,
@@ -41,10 +41,14 @@ export const sendResetEmail = async (config: any, to: string, resetLink: string)
     };
 
     try {
-        await transporter.sendMail(mailOptions);
-        logger.info(`Reset email sent to ${to}`);
-    } catch (error) {
-        logger.error(`Failed to send reset email to ${to}: ${error}`);
+        const info = await transporter.sendMail(mailOptions);
+        logger.info(`Reset email sent successfully: ${info.messageId}`);
+    } catch (error: any) {
+        logger.error('--- DETAILED EMAIL ERROR ---');
+        logger.error(`Error Code: ${error.code}`);
+        logger.error(`Error Message: ${error.message}`);
+        logger.error(`Full Error: ${JSON.stringify(error)}`);
+        logger.error('----------------------------');
         throw new Error('Failed to send reset email');
     }
 };
