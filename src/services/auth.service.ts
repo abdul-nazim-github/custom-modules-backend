@@ -289,7 +289,32 @@ export class AuthService {
             };
         } catch (error: any) {
             logger.error(`Password reset failed: ${error.message}`);
-            throw new Error('Invalid or expired reset token');
+            throw new Error(error.message || 'Invalid or expired reset token');
+        }
+    }
+
+    async verifyResetToken(token: string) {
+        try {
+            const decoded = jwt.verify(token, this.config.jwt.resetSecret) as any;
+            if (decoded.type !== 'reset') {
+                throw new Error('Invalid token type');
+            }
+
+            const user = await this.userRepository.findById(decoded.userId);
+            if (!user) {
+                throw new Error('User not found');
+            }
+
+            if (user.resetTokenUsedAt) {
+                throw new Error('Reset link has already been used');
+            }
+
+            return {
+                message: 'Token is valid',
+                isValid: true
+            };
+        } catch (error: any) {
+            throw new Error(error.message || 'Invalid or expired reset token');
         }
     }
 
