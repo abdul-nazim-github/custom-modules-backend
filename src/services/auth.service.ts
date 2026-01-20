@@ -225,6 +225,7 @@ export class AuthService {
             await sendResetEmail(this.config.email, payload.email, resetLink);
             return {
                 message: 'Email has been sent.',
+                success: true
             };
         } catch (error: any) {
             console.error("Error sending reset email:", error);
