@@ -5,7 +5,7 @@ import { AuthConfig } from '../config/types.js';
 import { UserRepository } from '../repositories/user.repository.js';
 import { SessionService } from './session.service.js';
 import { logger } from '../utils/logger.js';
-import { Role, RolePermissions } from '../config/roles.js';
+import { Role, RolePermissions, Permission } from '../config/roles.js';
 import { sendResetEmail } from '../utils/email.util.js';
 
 export class AuthService {
@@ -67,8 +67,8 @@ export class AuthService {
         device: { ip: string; userAgent: string };
     }) {
         const user = await this.userRepository.findByEmail(payload.email);
-        if (!user) {
-            logger.warn(`Failed login attempt: User not found for email ${payload.email}`);
+        if (!user || user.deleted_at) {
+            logger.warn(`Failed login attempt: User not found or deleted for email ${payload.email}`);
             throw new Error('Invalid credentials');
         }
 
@@ -123,8 +123,15 @@ export class AuthService {
         updatedBy: string;
     }) {
         const updater = await this.userRepository.findById(payload.updatedBy as any);
-        if (!updater || updater.role !== Role.SUPER_ADMIN) {
-            throw new Error('Only SUPER_ADMIN can update user roles');
+        if (!updater) {
+            throw new Error('Unauthorized');
+        }
+
+        const hasPermission = updater.role === Role.SUPER_ADMIN ||
+            (updater.permissions && updater.permissions.includes(Permission.MANAGE_USERS));
+
+        if (!hasPermission) {
+            throw new Error('Only SUPER_ADMIN or users with manage_users permission can update user roles');
         }
 
         if (!Object.values(Role).includes(payload.newRole)) {
@@ -158,8 +165,15 @@ export class AuthService {
         updatedBy: string;
     }) {
         const updater = await this.userRepository.findById(payload.updatedBy as any);
-        if (!updater || updater.role !== Role.SUPER_ADMIN) {
-            throw new Error('Only SUPER_ADMIN can update user permissions');
+        if (!updater) {
+            throw new Error('Unauthorized');
+        }
+
+        const hasPermission = updater.role === Role.SUPER_ADMIN ||
+            (updater.permissions && updater.permissions.includes(Permission.MANAGE_PERMISSIONS));
+
+        if (!hasPermission) {
+            throw new Error('Only SUPER_ADMIN or users with manage_permissions permission can update user permissions');
         }
 
         const user = await this.userRepository.findById(payload.userId as any);
@@ -206,23 +220,27 @@ export class AuthService {
             }))
         };
     }
-
     async forgotPassword(payload: { email: string }) {
         try {
             const user = await this.userRepository.findByEmail(payload.email);
-            if (!user) {
+            if (!user || user.deleted_at) {
                 return {
                     message: 'User does not exist.',
                     success: false
                 };
             }
             const resetToken = jwt.sign(
-                { userId: user._id, email: user.email, type: 'reset' },
+                {
+                    userId: user._id,
+                    email: user.email,
+                    type: 'reset'
+                },
                 this.config.jwt.resetSecret,
                 { expiresIn: this.config.jwt.resetTTL as any }
             );
             const resetLink = `${this.config.frontendUrl}/reset-password?token=${encodeURIComponent(resetToken)}&email=${encodeURIComponent(payload.email)}`;
             await sendResetEmail(this.config.email, payload.email, resetLink);
+            await this.userRepository.clearResetTokenUsed(user._id.toString());
             return {
                 message: 'Email has been sent.',
                 success: true
@@ -245,11 +263,27 @@ export class AuthService {
             if (decoded.type !== 'reset') {
                 throw new Error('Invalid token type');
             }
-            const hashedPassword = await bcrypt.hash(payload.password, 12);
-            const user = await this.userRepository.updatePassword(decoded.userId, hashedPassword);
+            const user = await this.userRepository.findById(decoded.userId);
             if (!user) {
                 throw new Error('User not found');
             }
+
+            // if (user.resetTokenUsedAt) {
+            //     throw new Error('Reset link has already been used');
+            // }
+            // Mark token as used atomically
+            // await this.userRepository.markResetTokenUsed(decoded.userId);
+            const result = await this.userRepository.markResetTokenUsed(decoded.userId);
+
+            if (result.modifiedCount === 0) {
+                throw new Error('Reset link has already been used');
+            }
+
+            const hashedPassword = await bcrypt.hash(payload.password, 12);
+            await this.userRepository.updatePassword(decoded.userId, hashedPassword);
+            // The user object here refers to the one fetched before the update.
+            // The updatePassword method should handle its own success/failure.
+            // If updatePassword throws an error, it will be caught by the try/catch.
             return {
                 message: 'Password has been reset successfully'
             };

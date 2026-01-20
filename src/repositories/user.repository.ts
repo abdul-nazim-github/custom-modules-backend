@@ -8,7 +8,7 @@ export class UserRepository {
     }
 
     async findById(userId: Types.ObjectId) {
-        return UserModel.findById(userId);
+        return UserModel.findOne({ _id: userId, deleted_at: null });
     }
 
     async create(data: {
@@ -43,7 +43,7 @@ export class UserRepository {
         limit: number;
         role?: string;
     }) {
-        const query: any = {};
+        const query: any = { deleted_at: null };
         if (filters.role) {
             query.role = filters.role;
         }
@@ -65,7 +65,28 @@ export class UserRepository {
         );
     }
 
+    async markResetTokenUsed(userId: string) {
+        return UserModel.updateOne(
+            { _id: userId, resetTokenUsedAt: { $exists: false } },
+            { $set: { resetTokenUsedAt: new Date() } }
+        );
+    }
+
+    async clearResetTokenUsed(userId: string) {
+        return UserModel.findByIdAndUpdate(
+            userId,
+            { $unset: { resetTokenUsedAt: 1 } },
+            { new: true }
+        );
+    }
+
     async delete(userId: string) {
-        return UserModel.findByIdAndDelete(userId);
+        return UserModel.findByIdAndUpdate(
+            userId,
+            {
+                deleted_at: new Date()
+            },
+            { new: true }
+        );
     }
 }
