@@ -211,7 +211,10 @@ export class AuthService {
         try {
             const user = await this.userRepository.findByEmail(payload.email);
             if (!user) {
-                return { message: 'User does not exists.' };
+                return {
+                    message: 'User does not exist.',
+                    success: false
+                };
             }
             const resetToken = jwt.sign(
                 { userId: user._id, email: user.email, type: 'reset' },
@@ -226,7 +229,8 @@ export class AuthService {
         } catch (error: any) {
             console.error("Error sending reset email:", error);
             return {
-                message: 'Failed to send reset email.',
+                message: "Failed to send reset email.",
+                success: false
             };
         }
     }
