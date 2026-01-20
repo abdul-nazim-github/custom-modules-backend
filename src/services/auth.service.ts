@@ -220,7 +220,6 @@ export class AuthService {
             }))
         };
     }
-
     async forgotPassword(payload: { email: string }) {
         try {
             const user = await this.userRepository.findByEmail(payload.email);
