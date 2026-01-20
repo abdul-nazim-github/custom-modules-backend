@@ -22,6 +22,7 @@ export const createAuthRoutes = (
     router.post('/logout', authMiddleware(accessSecret, sessionRepository, userRepository), authController.logout);
     router.post('/forgot-password', authController.forgotPassword);
     router.post('/reset-password', authController.resetPassword);
+    router.get('/verify-reset-token', authController.verifyResetToken);
 
     //  protected routes
     router.get('/profile',

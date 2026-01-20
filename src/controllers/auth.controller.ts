@@ -236,6 +236,30 @@ export class AuthController {
         }
     };
 
+    public verifyResetToken = async (req: Request, res: Response) => {
+        try {
+            const { token } = req.query;
+
+            if (!token) {
+                return res.status(400).json({
+                    message: 'Token is required',
+                    success: false
+                });
+            }
+
+            const result = await this.authService.verifyResetToken(token as string);
+            return res.status(200).json({
+                ...result,
+                success: true
+            });
+        } catch (error: any) {
+            return res.status(400).json({
+                message: error.message,
+                success: false
+            });
+        }
+    };
+
     public deleteUser = async (req: Request, res: Response) => {
         try {
             const { userId } = req.params;
