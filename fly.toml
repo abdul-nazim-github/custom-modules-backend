@@ -1,8 +1,8 @@
 # Unique app name (must be globally unique)
-app = "custom-modules-backend-nazim-2026"
+app = "custom-modules-backend-nazim-20260120"
 
 # Primary region for deployment
-primary_region = "ams"
+primary_region = "fra"
 
 [build]
   dockerfile = "Dockerfile"
