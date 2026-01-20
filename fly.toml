@@ -1,4 +1,7 @@
-app = "custom-modules-backend"
+# Unique app name (must be globally unique)
+app = "custom-modules-backend-nazim-2026"
+
+# Primary region for deployment
 primary_region = "ams"
 
 [build]
