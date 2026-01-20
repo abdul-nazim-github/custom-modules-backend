@@ -182,17 +182,20 @@ export class AuthController {
             }
 
             const result = await this.authService.forgotPassword({ email });
-            return res.status(200).json({
-                ...result,
-                success: true
-            });
+            if (!result.success) {
+                return res.status(500).json(result);
+            }
+
+            return res.status(200).json(result);
+
         } catch (error: any) {
-            return res.status(400).json({
-                message: error.message,
+            return res.status(500).json({
+                message: error.message || 'Something went wrong',
                 success: false
             });
         }
     };
+
 
     public resetPassword = async (req: Request, res: Response) => {
         try {
