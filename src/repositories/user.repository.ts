@@ -65,6 +65,21 @@ export class UserRepository {
         );
     }
 
+    async markResetTokenUsed(userId: string) {
+        return UserModel.updateOne(
+            { _id: userId, resetTokenUsedAt: { $exists: false } },
+            { $set: { resetTokenUsedAt: new Date() } }
+        );
+    }
+
+    async clearResetTokenUsed(userId: string) {
+        return UserModel.findByIdAndUpdate(
+            userId,
+            { $unset: { resetTokenUsedAt: 1 } },
+            { new: true }
+        );
+    }
+
     async delete(userId: string) {
         return UserModel.findByIdAndUpdate(
             userId,
