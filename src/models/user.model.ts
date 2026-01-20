@@ -33,6 +33,9 @@ export class User {
 
     @IsOptional()
     deleted_at?: Date;
+
+    @IsOptional()
+    resetTokenUsedAt?: Date;
 }
 
 const UserSchema = new Schema({
@@ -42,7 +45,8 @@ const UserSchema = new Schema({
     metadata: { type: Schema.Types.Mixed, default: {} },
     role: { type: String, enum: Object.values(Role), default: Role.USER },
     permissions: { type: [String], default: [] },
-    deleted_at: { type: Date, default: null }
+    deleted_at: { type: Date, default: null },
+    resetTokenUsedAt: { type: Date }
 }, {
     timestamps: {
         createdAt: 'created_at',

@@ -231,12 +231,17 @@ export class AuthService {
                 };
             }
             const resetToken = jwt.sign(
-                { userId: user._id, email: user.email, type: 'reset' },
+                {
+                    userId: user._id,
+                    email: user.email,
+                    type: 'reset'
+                },
                 this.config.jwt.resetSecret,
                 { expiresIn: this.config.jwt.resetTTL as any }
             );
             const resetLink = `${this.config.frontendUrl}/reset-password?token=${encodeURIComponent(resetToken)}&email=${encodeURIComponent(payload.email)}`;
             await sendResetEmail(this.config.email, payload.email, resetLink);
+            await this.userRepository.clearResetTokenUsed(user._id.toString());
             return {
                 message: 'Email has been sent.',
                 success: true
@@ -259,11 +264,27 @@ export class AuthService {
             if (decoded.type !== 'reset') {
                 throw new Error('Invalid token type');
             }
-            const hashedPassword = await bcrypt.hash(payload.password, 12);
-            const user = await this.userRepository.updatePassword(decoded.userId, hashedPassword);
+            const user = await this.userRepository.findById(decoded.userId);
             if (!user) {
                 throw new Error('User not found');
             }
+
+            // if (user.resetTokenUsedAt) {
+            //     throw new Error('Reset link has already been used');
+            // }
+            // Mark token as used atomically
+            // await this.userRepository.markResetTokenUsed(decoded.userId);
+            const result = await this.userRepository.markResetTokenUsed(decoded.userId);
+
+            if (result.modifiedCount === 0) {
+                throw new Error('Reset link has already been used');
+            }
+
+            const hashedPassword = await bcrypt.hash(payload.password, 12);
+            await this.userRepository.updatePassword(decoded.userId, hashedPassword);
+            // The user object here refers to the one fetched before the update.
+            // The updatePassword method should handle its own success/failure.
+            // If updatePassword throws an error, it will be caught by the try/catch.
             return {
                 message: 'Password has been reset successfully'
             };
