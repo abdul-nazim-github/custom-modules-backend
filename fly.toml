@@ -1,8 +1,5 @@
-# Unique app name (must be globally unique)
 app = "custom-modules-backend-nazim-20260120"
-
-# Primary region for deployment
-primary_region = "fra"
+primary_region = "ams"
 
 [build]
   dockerfile = "Dockerfile"
@@ -18,4 +15,4 @@ primary_region = "fra"
 [[vm]]
   cpu_kind = "shared"
   cpus = 1
-  memory_mb = 512
+  memory_mb = 256
