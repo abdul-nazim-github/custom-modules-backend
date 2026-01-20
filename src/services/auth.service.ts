@@ -5,7 +5,7 @@ import { AuthConfig } from '../config/types.js';
 import { UserRepository } from '../repositories/user.repository.js';
 import { SessionService } from './session.service.js';
 import { logger } from '../utils/logger.js';
-import { Role, RolePermissions } from '../config/roles.js';
+import { Role, RolePermissions, Permission } from '../config/roles.js';
 import { sendResetEmail } from '../utils/email.util.js';
 
 export class AuthService {
@@ -67,8 +67,8 @@ export class AuthService {
         device: { ip: string; userAgent: string };
     }) {
         const user = await this.userRepository.findByEmail(payload.email);
-        if (!user) {
-            logger.warn(`Failed login attempt: User not found for email ${payload.email}`);
+        if (!user || user.deleted_at) {
+            logger.warn(`Failed login attempt: User not found or deleted for email ${payload.email}`);
             throw new Error('Invalid credentials');
         }
 
@@ -123,8 +123,15 @@ export class AuthService {
         updatedBy: string;
     }) {
         const updater = await this.userRepository.findById(payload.updatedBy as any);
-        if (!updater || updater.role !== Role.SUPER_ADMIN) {
-            throw new Error('Only SUPER_ADMIN can update user roles');
+        if (!updater) {
+            throw new Error('Unauthorized');
+        }
+
+        const hasPermission = updater.role === Role.SUPER_ADMIN ||
+            (updater.permissions && updater.permissions.includes(Permission.MANAGE_USERS));
+
+        if (!hasPermission) {
+            throw new Error('Only SUPER_ADMIN or users with manage_users permission can update user roles');
         }
 
         if (!Object.values(Role).includes(payload.newRole)) {
@@ -158,8 +165,15 @@ export class AuthService {
         updatedBy: string;
     }) {
         const updater = await this.userRepository.findById(payload.updatedBy as any);
-        if (!updater || updater.role !== Role.SUPER_ADMIN) {
-            throw new Error('Only SUPER_ADMIN can update user permissions');
+        if (!updater) {
+            throw new Error('Unauthorized');
+        }
+
+        const hasPermission = updater.role === Role.SUPER_ADMIN ||
+            (updater.permissions && updater.permissions.includes(Permission.MANAGE_PERMISSIONS));
+
+        if (!hasPermission) {
+            throw new Error('Only SUPER_ADMIN or users with manage_permissions permission can update user permissions');
         }
 
         const user = await this.userRepository.findById(payload.userId as any);
@@ -210,8 +224,11 @@ export class AuthService {
     async forgotPassword(payload: { email: string }) {
         try {
             const user = await this.userRepository.findByEmail(payload.email);
-            if (!user) {
-                return { message: 'User does not exists.' };
+            if (!user || user.deleted_at) {
+                return {
+                    message: 'User does not exist.',
+                    success: false
+                };
             }
             const resetToken = jwt.sign(
                 { userId: user._id, email: user.email, type: 'reset' },
@@ -222,11 +239,13 @@ export class AuthService {
             await sendResetEmail(this.config.email, payload.email, resetLink);
             return {
                 message: 'Email has been sent.',
+                success: true
             };
         } catch (error: any) {
             console.error("Error sending reset email:", error);
             return {
-                message: 'Failed to send reset email.',
+                message: "Failed to send reset email.",
+                success: false
             };
         }
     }

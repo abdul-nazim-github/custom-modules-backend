@@ -25,11 +25,11 @@ const authConfig = {
     sessionSecret: process.env.SESSION_SECRET || 'session-secret',
     frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
     email: {
-        host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-        port: parseInt(process.env.EMAIL_PORT || '587'),
-        user: process.env.EMAIL_USER || '',
-        pass: process.env.EMAIL_PASS || '',
-        from: process.env.EMAIL_FROM || '"Auth Service" <no-reply@example.com>'
+        host: process.env.EMAIL_HOST || 'mail.smtp2go.com',
+        port: parseInt(process.env.EMAIL_PORT || '2525'),
+        user: process.env.EMAIL_USER || 'no-reply@my-mern-app.com',
+        pass: process.env.EMAIL_PASS || 'AG@XDK6Kz55',
+        from: process.env.EMAIL_FROM || 'ayan.ghosh@codeclouds.com'
     }
 };
 
