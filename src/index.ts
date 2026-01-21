@@ -6,6 +6,10 @@ import { AuthService } from './services/auth.service.js';
 import { SessionService } from './services/session.service.js';
 import { UserRepository } from './repositories/user.repository.js';
 import { SessionRepository } from './repositories/session.repository.js';
+import { ContentRepository } from './repositories/content.repository.js';
+import { ContentService } from './services/content.service.js';
+import { ContentController } from './controllers/content.controller.js';
+import { createContentRoutes } from './routes/content.routes.js';
 
 export class AuthModule {
     private config: AuthConfig;
@@ -22,7 +26,13 @@ export class AuthModule {
         const sessionService = new SessionService(sessionRepository, this.config);
         const authService = new AuthService(this.config, userRepository, sessionService);
         const authController = new AuthController(authService);
+
+        const contentRepository = new ContentRepository();
+        const contentService = new ContentService(contentRepository);
+        const contentController = new ContentController(contentService);
+
         this.router.use('/auth', createAuthRoutes(authController, this.config.jwt.accessSecret, sessionRepository, userRepository));
+        this.router.use('/content', createContentRoutes(contentController));
     }
 
     public static init(config: AuthConfig): AuthModule {
