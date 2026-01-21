@@ -52,12 +52,14 @@ export class ContentController {
             });
 
             const from = (page - 1) * limit + 1;
+            const to = from + items.length - 1;
 
             res.json({
                 data: {
                     items,
                     totalCount,
-                    from: items.length > 0 ? from : 0
+                    from: items.length > 0 ? from : 0,
+                    to: items.length > 0 ? to : 0
                 },
                 success: true
             });
