@@ -154,7 +154,6 @@ export class AuthController {
             const page = req.query.page ? parseInt(req.query.page as string) : 1;
             const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
             const role = req.query.role as Role;
-
             const result = await this.authService.listUsers({
                 page,
                 limit,
