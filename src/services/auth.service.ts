@@ -32,6 +32,9 @@ export class AuthService {
     }) {
         const existing = await this.userRepository.findByEmail(payload.email);
         if (existing) {
+            if (existing.deleted_at) {
+                throw new Error('User has been blocked or deleted. Please contact super admin.');
+            }
             throw new Error('User already exists');
         }
 
@@ -254,7 +257,7 @@ export class AuthService {
         }
     }
 
-    
+
     async resetPassword(payload: {
         token: string;
         password: string;
