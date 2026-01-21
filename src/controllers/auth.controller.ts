@@ -163,8 +163,8 @@ export class AuthController {
             const from = (page - 1) * limit + 1;
             const to = from + result.data.length - 1;
             return res.status(200).json({
-                data: {
-                    data: result.data,
+                data: result.data,
+                meta: {
                     totalCount: result.totalCount,
                     from: result.data.length > 0 ? from : 0,
                     to: result.data.length > 0 ? to : 0,
