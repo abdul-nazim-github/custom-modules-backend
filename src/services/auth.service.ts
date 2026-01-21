@@ -20,18 +20,23 @@ export class AuthService {
         name?: string;
         device: { ip: string; userAgent: string };
     }) {
+        const existing = await this.userRepository.findByEmail(payload.email);
+        if (existing) {
+            throw new Error('User already exists');
+        }
+
         const hashedPassword = await bcrypt.hash(payload.password, 12);
 
         const user = await this.userRepository.create({
             email: payload.email,
             password: hashedPassword,
-            name: payload.name,
+            name: payload.name
         });
 
         return {
             message: 'User registered successfully',
             data: {
-                _id: user._id,
+                id: user._id,
                 email: user.email,
                 name: user.name,
                 created_at: (user as any).created_at

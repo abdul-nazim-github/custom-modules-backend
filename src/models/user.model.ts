@@ -21,6 +21,9 @@ export class User {
     name!: string;
 
     @IsOptional()
+    deleted_at?: Date;
+
+    @IsOptional()
     metadata?: Record<string, any>;
 }
 
@@ -28,7 +31,8 @@ const UserSchema = new Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     name: { type: String, required: true },
-    metadata: { type: Schema.Types.Mixed, default: {} }
+    metadata: { type: Schema.Types.Mixed, default: {} },
+    deleted_at: { type: Date, default: null }
 }, {
     timestamps: {
         createdAt: 'created_at',

@@ -13,6 +13,12 @@ export const checkEmailExists = (userRepository: UserRepository) => {
 
         const existing = await userRepository.findByEmail(email);
         if (existing) {
+            if (existing.deleted_at) {
+                return res.status(400).json({
+                    message: 'User has been blocked or deleted. Please contact super admin.',
+                    success: false
+                });
+            }
             return res.status(400).json({
                 message: 'User already exists',
                 success: false
