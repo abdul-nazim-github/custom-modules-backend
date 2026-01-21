@@ -32,7 +32,7 @@ export class AuthModule {
         const contentController = new ContentController(contentService);
 
         this.router.use('/auth', createAuthRoutes(authController, this.config.jwt.accessSecret, sessionRepository, userRepository));
-        this.router.use('/content', createContentRoutes(contentController));
+        this.router.use('/content', createContentRoutes(contentController, this.config.jwt.accessSecret, sessionRepository, userRepository));
     }
 
     public static init(config: AuthConfig): AuthModule {
