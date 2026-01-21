@@ -151,18 +151,28 @@ export class AuthController {
 
     public listUsers = async (req: Request, res: Response) => {
         try {
-            const { page, limit, role } = req.query;
+            const page = req.query.page ? parseInt(req.query.page as string) : 1;
+            const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+            const role = req.query.role as Role;
 
             const result = await this.authService.listUsers({
-                page: page ? parseInt(page as string) : 1,
-                limit: limit ? parseInt(limit as string) : 10,
-                role: role as Role
+                page,
+                limit,
+                role
             });
-
+            const from = (page - 1) * limit + 1;
+            const to = from + result.data.length - 1;
             return res.status(200).json({
-                ...result,
+                data: {
+                    data: result.data,
+                    totalCount: result.totalCount,
+                    from: result.data.length > 0 ? from : 0,
+                    to: result.data.length > 0 ? to : 0,
+                },
+                message: result.message,
                 success: true
             });
+
         } catch (error: any) {
             return res.status(400).json({
                 message: error.message,
@@ -173,10 +183,8 @@ export class AuthController {
 
     public forgotPassword = async (req: Request, res: Response) => {
         try {
-            console.log('forgotPassword request body:', req.body);
             const { email } = req.body;
             if (!email) {
-                console.log('Email missing in body');
                 return res.status(400).json({
                     message: 'Email is required',
                     success: false
@@ -184,15 +192,12 @@ export class AuthController {
             }
 
             const result = await this.authService.forgotPassword({ email });
-            console.log('forgotPassword service result:', result);
 
             if (!result.success) {
                 const statusCode = result.message === 'User does not exist.' ? 404 : 500;
-                console.log(`Returning error status ${statusCode}`);
                 return res.status(statusCode).json(result);
             }
 
-            console.log('Returning success 200');
             return res.status(200).json(result);
 
         } catch (error: any) {
@@ -207,11 +212,9 @@ export class AuthController {
 
     public resetPassword = async (req: Request, res: Response) => {
         try {
-            console.log('resetPassword request body:', req.body);
             const { token, password } = req.body;
 
             if (!token || !password) {
-                console.log('Token or password missing');
                 return res.status(400).json({
                     message: 'Token and password are required',
                     success: false
@@ -222,7 +225,6 @@ export class AuthController {
                 token,
                 password
             });
-            console.log('resetPassword service result:', result);
             return res.status(200).json({
                 ...result,
                 success: true

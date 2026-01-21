@@ -50,11 +50,16 @@ export class UserRepository {
 
         const skip = (filters.page - 1) * filters.limit;
 
-        return UserModel.find(query)
-            .skip(skip)
-            .limit(filters.limit)
-            .select('-password')
-            .exec();
+        const [items, totalCount] = await Promise.all([
+            UserModel.find(query)
+                .skip(skip)
+                .limit(filters.limit)
+                .select('-password')
+                .exec(),
+            UserModel.countDocuments(query)
+        ]);
+
+        return { items, totalCount };
     }
 
     async updatePassword(userId: string, password: string) {

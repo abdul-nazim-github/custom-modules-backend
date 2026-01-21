@@ -204,7 +204,7 @@ export class AuthService {
         limit?: number;
         role?: Role;
     }) {
-        const users = await this.userRepository.findAll({
+        const { items, totalCount } = await this.userRepository.findAll({
             page: payload.page || 1,
             limit: payload.limit || 10,
             role: payload.role
@@ -212,14 +212,15 @@ export class AuthService {
 
         return {
             message: 'Users retrieved successfully',
-            data: users.map(user => ({
+            data: items.map(user => ({
                 id: user._id,
                 email: user.email,
                 name: user.name,
                 role: user.role || Role.USER,
                 permissions: user.permissions || [],
                 created_at: (user as any).created_at
-            }))
+            })),
+            totalCount
         };
     }
     async forgotPassword(payload: { email: string }) {
