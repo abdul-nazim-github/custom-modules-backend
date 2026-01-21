@@ -27,8 +27,8 @@ export class AuthService {
         device: { ip: string; userAgent: string };
     }) {
         const user = await this.userRepository.findByEmail(payload.email);
-        if (!user) {
-            logger.warn(`Failed login attempt: User not found for email ${payload.email}`);
+        if (!user || user.deleted_at) {
+            logger.warn(`Failed login attempt: User not found or deleted for email ${payload.email}`);
             throw new Error('Invalid credentials');
         }
 

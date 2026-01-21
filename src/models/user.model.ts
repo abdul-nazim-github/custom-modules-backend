@@ -11,7 +11,7 @@ export class User {
     @IsNotEmpty()
     @MinLength(8, { message: 'Password must be at least 8 characters long' })
     @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
-        message: 'Password is too weak. It must contain at least one uppercase letter, one number or special character.',
+        message: 'Password is too weak. It must contain at least one uppercase letter,one smallcase letter ,one number and one special character.',
     })
     password!: string;
 
@@ -22,13 +22,17 @@ export class User {
 
     @IsOptional()
     metadata?: Record<string, any>;
+
+    @IsOptional()
+    deleted_at?: Date;
 }
 
 const UserSchema = new Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     name: { type: String, required: true },
-    metadata: { type: Schema.Types.Mixed, default: {} }
+    metadata: { type: Schema.Types.Mixed, default: {} },
+    deleted_at: { type: Date, default: null }
 }, {
     timestamps: {
         createdAt: 'created_at',
