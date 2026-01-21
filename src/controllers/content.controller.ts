@@ -56,7 +56,7 @@ export class ContentController {
 
             res.json({
                 data: {
-                    items,
+                    data: items,
                     totalCount,
                     from: items.length > 0 ? from : 0,
                     to: items.length > 0 ? to : 0
