@@ -17,11 +17,11 @@ export const createContentRoutes = (
     // All content routes require authentication
     router.use(authMiddleware(accessSecret, sessionRepository, userRepository));
 
-    router.post('/', validateBody(Content), contentController.create);
-    router.get('/', contentController.list);
-    router.get('/:id', contentController.getOne);
-    router.put('/:id', validateBody(Content), contentController.update);
-    router.delete('/:id', contentController.delete);
+    router.post('/create', validateBody(Content), contentController.create);
+    router.get('/list', contentController.list);
+    router.get('/list/:id', contentController.getOne);
+    router.put('/update/:id', validateBody(Content), contentController.update);
+    router.delete('/delete/:id', contentController.delete);
 
     return router;
 };
