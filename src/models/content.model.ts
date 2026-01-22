@@ -36,10 +36,11 @@ const ContentSchema = new Schema({
     shortDescription: { type: String, required: true },
     content: { type: String, required: true },
     status: { type: Number, default: 1 }, // 1 for active, 0 for inactive
+    updated_at: { type: Date }
 }, {
     timestamps: {
         createdAt: 'created_at',
-        updatedAt: 'updated_at'
+        updatedAt: false
     },
     versionKey: false
 });

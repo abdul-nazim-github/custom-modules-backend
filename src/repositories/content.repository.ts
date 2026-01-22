@@ -37,7 +37,7 @@ export class ContentRepository {
     async update(id: string, data: Partial<Content>) {
         return ContentModel.findByIdAndUpdate(
             id,
-            { $set: data },
+            { $set: { ...data, updated_at: new Date() } },
             { new: true }
         );
     }

@@ -10,13 +10,16 @@ export class ContentService {
 
     async createContent(payload: Partial<Content>) {
         const content = await this.contentRepository.create(payload);
+
         return {
-            id: content._id,
-            title: content.title,
-            body: content.shortDescription,
-            status: content.status,
-            created_at: content.created_at,
-            updated_at: content.updated_at,
+            message: 'Content created successfully',
+            data: {
+                id: content._id,
+                title: content.title,
+                body: content.shortDescription,
+                status: content.status,
+                created_at: content.created_at,
+            }
         };
     }
 
@@ -25,7 +28,18 @@ export class ContentService {
         if (!content) {
             throw new Error('Content not found');
         }
-        return content;
+
+        return {
+            message: 'Content retrieved successfully',
+            data: {
+                id: content._id,
+                title: content.title,
+                body: content.shortDescription,
+                status: content.status,
+                created_at: content.created_at,
+                ...(content.updated_at && { updated_at: content.updated_at }),
+            }
+        };
     }
 
     async listContent(filters: {
@@ -33,11 +47,24 @@ export class ContentService {
         limit?: number;
         status?: number;
     }) {
-        return this.contentRepository.findAll({
+        const { items, totalCount } = await this.contentRepository.findAll({
             page: filters.page || 1,
             limit: filters.limit || 10,
             status: filters.status
         });
+
+        return {
+            message: 'Content list retrieved successfully',
+            data: items.map(content => ({
+                id: content._id,
+                title: content.title,
+                body: content.shortDescription,
+                status: content.status,
+                created_at: content.created_at,
+                ...(content.updated_at && { updated_at: content.updated_at }),
+            })),
+            totalCount
+        };
     }
 
     async updateContent(id: string, payload: Partial<Content>) {
@@ -46,12 +73,15 @@ export class ContentService {
             throw new Error('Content not found');
         }
         return {
-            id: content._id,
-            title: content.title,
-            body: content.shortDescription,
-            status: content.status,
-            created_at: content.created_at,
-            updated_at: content.updated_at,
+            message: 'Content updated successfully',
+            data: {
+                id: content._id,
+                title: content.title,
+                body: content.shortDescription,
+                status: content.status,
+                created_at: content.created_at,
+                updated_at: content.updated_at,
+            }
         };
     }
 
@@ -60,6 +90,8 @@ export class ContentService {
         if (!content) {
             throw new Error('Content not found');
         }
-        return content;
+        return {
+            message: 'Content deleted successfully'
+        };
     }
 }
