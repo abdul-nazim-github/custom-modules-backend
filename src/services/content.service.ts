@@ -89,15 +89,21 @@ export class ContentService {
     }
 
     async deleteContent(id: string) {
-        const content = await this.contentRepository.delete(id);
+        const content = await this.contentRepository.findById(id);
+
         if (!content) {
             throw new Error('Content not found');
         }
+
         if (content.deleted_at) {
-            throw new Error('This content has been already deleted or do not exist.');
+            throw new Error('This content has already been deleted.');
         }
+
+        await this.contentRepository.delete(id);
+
         return {
             message: 'Content deleted successfully'
         };
     }
+
 }
