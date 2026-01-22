@@ -17,25 +17,29 @@ export const authMiddleware = (
   userRepository: UserRepository
 ) => {
   return async (req: Request, res: Response, next: NextFunction) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({
+        message: 'Authorization header missing',
+        success: false
+      });
+    }
+
+    if (!authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        message: 'Invalid authorization format',
+        success: false
+      });
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({
+        message: 'Access token missing',
+        success: false
+      });
+    }
     try {
-      const authHeader = req.headers.authorization;
-
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({
-          message: 'Token is missing',
-          success: false
-        });
-      }
-
-      const token = authHeader.split(' ')[1];
-
-      if (!token) {
-        return res.status(401).json({
-          message: 'Token is missing',
-          success: false
-        });
-      }
-
       const decoded = jwt.verify(token, accessSecret) as any;
 
       const user = await userRepository.findById(decoded.userId);
@@ -46,16 +50,17 @@ export const authMiddleware = (
         });
       }
 
-      req.user = {
-        id: decoded.userId
-      };
-
+      req.user = { id: decoded.userId };
       next();
-    } catch {
+    } catch (error: any) {
       return res.status(401).json({
-        message: 'Invalid or expired access token',
+        message:
+          error.name === 'TokenExpiredError'
+            ? 'Access token expired'
+            : 'Invalid access token',
         success: false
       });
     }
   };
 };
+
