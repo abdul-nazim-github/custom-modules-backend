@@ -25,8 +25,15 @@ export class AuthService {
         updatedBy: string;
     }) {
         const updater = await this.userRepository.findById(payload.updatedBy as any);
-        if (!updater || updater.role !== Role.SUPER_ADMIN) {
-            throw new Error('Only SUPER_ADMIN can update user roles');
+        if (!updater) {
+            throw new Error('Unauthorized');
+        }
+
+        const hasPermission = updater.role === Role.SUPER_ADMIN ||
+            (updater.permissions && updater.permissions.includes(Permission.MANAGE_USERS));
+
+        if (!hasPermission) {
+            throw new Error('Only SUPER_ADMIN or users with manage_users permission can update user roles');
         }
 
         if (!Object.values(Role).includes(payload.newRole)) {
@@ -60,8 +67,15 @@ export class AuthService {
         updatedBy: string;
     }) {
         const updater = await this.userRepository.findById(payload.updatedBy as any);
-        if (!updater || updater.role !== Role.SUPER_ADMIN) {
-            throw new Error('Only SUPER_ADMIN can update user permissions');
+        if (!updater) {
+            throw new Error('Unauthorized');
+        }
+
+        const hasPermission = updater.role === Role.SUPER_ADMIN ||
+            (updater.permissions && updater.permissions.includes(Permission.MANAGE_PERMISSIONS));
+
+        if (!hasPermission) {
+            throw new Error('Only SUPER_ADMIN or users with manage_permissions permission can update user permissions');
         }
 
         const user = await this.userRepository.findById(payload.userId as any);
