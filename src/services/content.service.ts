@@ -72,6 +72,9 @@ export class ContentService {
         if (!content) {
             throw new Error('Content not found');
         }
+        if (content.deleted_at) {
+            throw new Error('This content has been deleted.');
+        }
         return {
             message: 'Content updated successfully',
             data: {
@@ -89,6 +92,9 @@ export class ContentService {
         const content = await this.contentRepository.delete(id);
         if (!content) {
             throw new Error('Content not found');
+        }
+        if (content.deleted_at) {
+            throw new Error('This content has been already deleted or do not exist.');
         }
         return {
             message: 'Content deleted successfully'
