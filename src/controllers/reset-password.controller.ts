@@ -11,7 +11,7 @@ export class ResetPasswordController {
     public changePassword = async (req: Request, res: Response) => {
         try {
             const userId = req.user?.id;
-            const { oldPassword, newPassword } = req.body;
+            const { newPassword } = req.body;
 
             if (!userId) {
                 return res.status(401).json({
@@ -20,16 +20,15 @@ export class ResetPasswordController {
                 });
             }
 
-            if (!oldPassword || !newPassword) {
+            if (!newPassword) {
                 return res.status(400).json({
-                    message: 'Old password and new password are required',
+                    message: 'New password is required',
                     success: false
                 });
             }
 
             const result = await this.resetPasswordService.changePassword({
                 userId,
-                oldPassword,
                 newPassword
             });
 

@@ -1,15 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { UserRepository } from '../repositories/user.repository.js';
-import { Role } from '../config/roles.js';
 
 declare global {
   namespace Express {
     interface Request {
       user?: {
         id: string;
-        role: string;
-        permissions: string[];
       };
     }
   }
@@ -42,11 +39,8 @@ export const authMiddleware = (
         });
       }
 
-      const userRole = (user.role as Role) || Role.USER;
       req.user = {
-        id: decoded.userId,
-        role: userRole,
-        permissions: user.permissions || []
+        id: decoded.userId
       };
 
       next();
