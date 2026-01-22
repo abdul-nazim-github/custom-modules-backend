@@ -43,6 +43,10 @@ export class ContentRepository {
     }
 
     async delete(id: string) {
-        return ContentModel.findByIdAndDelete(id);
+        return ContentModel.findByIdAndUpdate(id,
+            {
+                deleted_at: new Date()
+            },
+            { new: true });
     }
 }

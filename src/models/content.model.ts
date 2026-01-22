@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsOptional, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsNumber, IsIn } from 'class-validator';
 import { Schema, model, Document } from 'mongoose';
 
 export class Content {
@@ -16,6 +16,7 @@ export class Content {
 
     @IsNumber()
     @IsOptional()
+    @IsIn([0, 1])
     status?: number;
 
     @IsOptional()
@@ -29,14 +30,18 @@ export class Content {
 
     @IsOptional()
     updated_at?: Date;
+
+    @IsOptional()
+    deleted_at?: Date;
 }
 
 const ContentSchema = new Schema({
     title: { type: String, required: true },
     shortDescription: { type: String, required: true },
     content: { type: String, required: true },
-    status: { type: Number, default: 1 }, // 1 for active, 0 for inactive
-    updated_at: { type: Date }
+    status: { type: Number, default: 1, enum: [0, 1] }, // 1 for active, 0 for inactive
+    updated_at: { type: Date },
+    deleted_at: { type: Date }
 }, {
     timestamps: {
         createdAt: 'created_at',
