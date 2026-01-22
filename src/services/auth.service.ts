@@ -322,20 +322,31 @@ export class AuthService {
         }
     }
 
-    async deleteUser(payload: {
-        userId: string;
-        deletedBy: string;
-    }) {
+    async deleteUser(payload: { userId: string; deletedBy: string }) {
         const deleter = await this.userRepository.findById(payload.deletedBy as any);
-        if (!deleter || deleter.role !== Role.SUPER_ADMIN) {
-            throw new Error('Only SUPER_ADMIN can delete users');
+        if (!deleter) {
+            throw new Error('Unauthorized');
         }
-        const user = await this.userRepository.delete(payload.userId);
+
+        const hasPermission =
+            deleter.role === Role.SUPER_ADMIN ||
+            deleter.permissions?.includes(Permission.MANAGE_USERS);
+
+        if (!hasPermission) {
+            throw new Error(
+                'Only SUPER_ADMIN or users with MANAGE_USERS permission can delete users'
+            );
+        }
+
+        const user = await this.userRepository.findById(payload.userId as any);
         if (!user) {
             throw new Error('User not found');
         }
+        await this.userRepository.delete(payload.userId);
+
         return {
             message: 'User deleted successfully'
         };
     }
+
 }
