@@ -19,7 +19,16 @@ export class Content {
     status?: number;
 
     @IsOptional()
-    metadata?: Record<string, any>;
+    _id?: any;
+
+    @IsOptional()
+    id?: any;
+
+    @IsOptional()
+    created_at?: Date;
+
+    @IsOptional()
+    updated_at?: Date;
 }
 
 const ContentSchema = new Schema({
@@ -27,7 +36,6 @@ const ContentSchema = new Schema({
     shortDescription: { type: String, required: true },
     content: { type: String, required: true },
     status: { type: Number, default: 1 }, // 1 for active, 0 for inactive
-    metadata: { type: Schema.Types.Mixed, default: {} }
 }, {
     timestamps: {
         createdAt: 'created_at',

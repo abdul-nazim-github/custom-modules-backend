@@ -9,7 +9,15 @@ export class ContentService {
     }
 
     async createContent(payload: Partial<Content>) {
-        return this.contentRepository.create(payload);
+        const content = await this.contentRepository.create(payload);
+        return {
+            id: content._id,
+            title: content.title,
+            body: content.shortDescription,
+            status: content.status,
+            created_at: content.created_at,
+            updated_at: content.updated_at,
+        };
     }
 
     async getContent(id: string) {
@@ -37,7 +45,14 @@ export class ContentService {
         if (!content) {
             throw new Error('Content not found');
         }
-        return content;
+        return {
+            id: content._id,
+            title: content.title,
+            body: content.shortDescription,
+            status: content.status,
+            created_at: content.created_at,
+            updated_at: content.updated_at,
+        };
     }
 
     async deleteContent(id: string) {
