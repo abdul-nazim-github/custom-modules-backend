@@ -154,7 +154,6 @@ export class AuthController {
             const page = req.query.page ? parseInt(req.query.page as string) : 1;
             const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
             const role = req.query.role as Role;
-
             const result = await this.authService.listUsers({
                 page,
                 limit,
@@ -163,8 +162,8 @@ export class AuthController {
             const from = (page - 1) * limit + 1;
             const to = from + result.data.length - 1;
             return res.status(200).json({
-                data: {
-                    data: result.data,
+                data: result.data,
+                meta: {
                     totalCount: result.totalCount,
                     from: result.data.length > 0 ? from : 0,
                     to: result.data.length > 0 ? to : 0,
