@@ -1,9 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-
-import { SessionRepository } from '../repositories/session.repository.js';
 import { UserRepository } from '../repositories/user.repository.js';
-import { Role, RolePermissions } from '../config/roles.js';
+import { Role } from '../config/roles.js';
 
 declare global {
   namespace Express {
@@ -13,14 +11,12 @@ declare global {
         role: string;
         permissions: string[];
       };
-      sessionId?: string;
     }
   }
 }
 
 export const authMiddleware = (
   accessSecret: string,
-  sessionRepository: SessionRepository,
   userRepository: UserRepository
 ) => {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -38,23 +34,6 @@ export const authMiddleware = (
 
       const decoded = jwt.verify(token, accessSecret) as any;
 
-      if (decoded.sessionId) {
-        const session = await sessionRepository.findById(decoded.sessionId);
-        if (!session || !session.isActive) {
-          return res.status(401).json({
-            message: 'Session is no longer active',
-            success: false
-          });
-        }
-
-        if (session.userId.toString() !== decoded.userId) {
-          return res.status(401).json({
-            message: 'Session does not belong to this user',
-            success: false
-          });
-        }
-      }
-
       const user = await userRepository.findById(decoded.userId);
       if (!user) {
         return res.status(401).json({
@@ -69,7 +48,6 @@ export const authMiddleware = (
         role: userRole,
         permissions: user.permissions || []
       };
-      req.sessionId = decoded.sessionId;
 
       next();
     } catch {
