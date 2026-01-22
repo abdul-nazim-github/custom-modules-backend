@@ -22,12 +22,19 @@ export const authMiddleware = (
 
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({
-          message: 'Authorization token missing',
+          message: 'Token is missing',
           success: false
         });
       }
 
       const token = authHeader.split(' ')[1];
+
+      if (!token) {
+        return res.status(401).json({
+          message: 'Token is missing',
+          success: false
+        });
+      }
 
       const decoded = jwt.verify(token, accessSecret) as any;
 
