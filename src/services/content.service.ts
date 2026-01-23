@@ -52,7 +52,6 @@ export class ContentService {
             limit: filters.limit || 10,
             status: filters.status
         });
-
         return {
             message: 'Content list retrieved successfully',
             data: items.map(content => ({
