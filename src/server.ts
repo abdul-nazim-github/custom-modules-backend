@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import { AuthModule } from './index.js';
 import { logger } from './utils/logger.js';
+import { startKeepAlive } from './utils/ping.util.js';
 
 dotenv.config();
 
@@ -33,6 +34,11 @@ const authConfig = {
     }
 };
 
+// for keep-alive
+app.get('/api/ping', (req, res) => {
+    res.status(200).json({ message: 'pong', success: true });
+});
+
 const authModule = AuthModule.init(authConfig);
 app.use('/api', authModule.router);
 
@@ -43,7 +49,15 @@ const start = async () => {
         console.log(`Application is running on http://localhost:${port}`);
         await mongoose.connect(authConfig.mongoUri);
         logger.info('💾 Database connected successfully');
+
         app.listen(port, () => {
+            const externalUrl = process.env.RENDER_EXTERNAL_URL;
+            if (externalUrl) {
+                const baseUrl = externalUrl.endsWith('/') ? externalUrl.slice(0, -1) : externalUrl;
+                startKeepAlive(`${baseUrl}/api/ping`);
+            } else {
+                logger.info('RENDER_EXTERNAL_URL not set. Skipping self-pinging.');
+            }
         });
     } catch (error) {
         logger.error(`Error starting server: ${error}`);
