@@ -12,8 +12,6 @@ export class ContactController {
         try {
             const payload = {
                 ...req.body,
-                ip: req.ip || req.headers['x-forwarded-for'] || 'unknown',
-                userAgent: req.headers['user-agent'] || 'unknown'
             };
             const result = await this.contactService.submitContact(payload);
             res.status(201).json({

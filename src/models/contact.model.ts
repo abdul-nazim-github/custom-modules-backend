@@ -6,8 +6,6 @@ export interface IContact extends Document {
     subject: string;
     message: string;
     status: number; // 0: Unread, 1: Read, 2: Replied
-    ip?: string;
-    userAgent?: string;
     created_at: Date;
     updated_at: Date;
 }
@@ -18,8 +16,6 @@ const ContactSchema: Schema = new Schema({
     subject: { type: String, required: true },
     message: { type: String, required: true },
     status: { type: Number, default: 0 },
-    ip: { type: String },
-    userAgent: { type: String },
 }, {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });

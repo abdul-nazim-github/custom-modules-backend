@@ -32,8 +32,6 @@ export class ContactService {
                 <p><strong>Email:</strong> ${contact.email}</p>
                 <p><strong>Subject:</strong> ${contact.subject}</p>
                 <p><strong>Message:</strong> ${contact.message}</p>
-                <hr>
-                <p><small>IP: ${contact.ip || 'Unknown'}</small></p>
             `
         }).catch(err => logger.error(`Failed to send admin email: ${err.message}`));
 
