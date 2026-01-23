@@ -26,7 +26,7 @@ export class ContentController {
 
     public getOne = async (req: Request, res: Response) => {
         try {
-            const result = await this.contentService.getContent(req.params.id);
+            const result = await this.contentService.getContent(req.params.id as string);
             res.json({
                 message: result.message,
                 data: result.data,
@@ -75,7 +75,7 @@ export class ContentController {
 
     public update = async (req: Request, res: Response) => {
         try {
-            const result = await this.contentService.updateContent(req.params.id, req.body);
+            const result = await this.contentService.updateContent(req.params.id as string, req.body);
             res.json({
                 message: result.message,
                 data: result.data,
@@ -91,7 +91,7 @@ export class ContentController {
 
     public delete = async (req: Request, res: Response) => {
         try {
-            const result = await this.contentService.deleteContent(req.params.id);
+            const result = await this.contentService.deleteContent(req.params.id as string);
             res.json({
                 message: result.message,
                 success: true
