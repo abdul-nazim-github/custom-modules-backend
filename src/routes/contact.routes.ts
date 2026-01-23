@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { ContactController } from '../controllers/contact.controller.js';
-import { validateBody } from '../middlewares/validation.middleware.js';
+import { validateBody } from '../middlewares/contacts.middleware.js';
 import { ContactDto } from '../dtos/contact.dto.js';
 
 const contactSubmitLimiter = rateLimit({
