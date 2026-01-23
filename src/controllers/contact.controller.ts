@@ -1,40 +1,32 @@
 import { Request, Response } from 'express';
-import { ContentService } from '../services/content.service.js';
+import { ContactService } from '../services/contact.service.js';
 
-export class ContentController {
-    private contentService: ContentService;
+export class ContactController {
+    private contactService: ContactService;
 
-    constructor(contentService: ContentService) {
-        this.contentService = contentService;
+    constructor(contactService: ContactService) {
+        this.contactService = contactService;
     }
 
-    public create = async (req: Request, res: Response) => {
+    public submit = async (req: Request, res: Response) => {
         try {
-            const result = await this.contentService.createContent(req.body);
+            const payload = {
+                ...req.body,
+                ip: req.ip || req.headers['x-forwarded-for'] || 'unknown',
+                userAgent: req.headers['user-agent'] || 'unknown'
+            };
+            const result = await this.contactService.submitContact(payload);
             res.status(201).json({
                 message: result.message,
                 data: result.data,
                 success: true
             });
         } catch (error: any) {
-            res.status(400).json({
-                message: error.message,
-                success: false
-            });
-        }
-    };
+            // Log the actual error for debugging
+            console.error(`Contact submission error: ${error.message}`);
 
-    public getOne = async (req: Request, res: Response) => {
-        try {
-            const result = await this.contentService.getContent(req.params.id);
-            res.json({
-                message: result.message,
-                data: result.data,
-                success: true
-            });
-        } catch (error: any) {
-            res.status(404).json({
-                message: error.message,
+            res.status(400).json({
+                message: 'Unable to process your request at this time. Please try again later.',
                 success: false
             });
         }
@@ -46,11 +38,7 @@ export class ContentController {
             const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
             const status = req.query.status ? parseInt(req.query.status as string) : undefined;
 
-            const result = await this.contentService.listContent({
-                page,
-                limit,
-                status
-            });
+            const result = await this.contactService.listContacts({ page, limit, status });
 
             const from = (page - 1) * limit + 1;
             const to = from + result.data.length - 1;
@@ -73,9 +61,26 @@ export class ContentController {
         }
     };
 
-    public update = async (req: Request, res: Response) => {
+    public getOne = async (req: Request, res: Response) => {
         try {
-            const result = await this.contentService.updateContent(req.params.id, req.body);
+            const result = await this.contactService.getContact(req.params.id as string);
+            res.json({
+                message: result.message,
+                data: result.data,
+                success: true
+            });
+        } catch (error: any) {
+            res.status(404).json({
+                message: error.message,
+                success: false
+            });
+        }
+    };
+
+    public updateStatus = async (req: Request, res: Response) => {
+        try {
+            const { status } = req.body;
+            const result = await this.contactService.updateContactStatus(req.params.id as string, status);
             res.json({
                 message: result.message,
                 data: result.data,
@@ -91,7 +96,7 @@ export class ContentController {
 
     public delete = async (req: Request, res: Response) => {
         try {
-            const result = await this.contentService.deleteContent(req.params.id);
+            const result = await this.contactService.deleteContact(req.params.id as string);
             res.json({
                 message: result.message,
                 success: true

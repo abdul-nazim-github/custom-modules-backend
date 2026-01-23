@@ -1,28 +1,20 @@
 import { plainToInstance } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
-import type { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 
-export const validateBody = (dtoClass: any) => {
+export const validateBody = (type: any) => {
     return async (req: Request, res: Response, next: NextFunction) => {
-        const instance = plainToInstance(dtoClass, req.body);
-        const errors = await validate(instance, {
-            whitelist: true,
-            forbidNonWhitelisted: true,
-        });
+        const input = plainToInstance(type, req.body);
+        const errors = await validate(input);
 
         if (errors.length > 0) {
-            const message = errors
-                .map((error: ValidationError) => Object.values(error.constraints || {}))
-                .flat()
-                .join(', ');
-
             return res.status(400).json({
-                message,
-                success: false,
+                message: 'Validation failed. Please check your input.',
+                success: false
             });
         }
 
-        req.body = instance;
+        req.body = input;
         next();
     };
 };
