@@ -24,6 +24,7 @@ export class ContactService {
 
         // Send Admin Notification
         sendEmail({
+            // to: process.env.EMAIL_FROM || 'admin@example.com',
             to: process.env.ADMIN_EMAIL || 'admin@example.com',
             subject: `New Contact Form Submission: ${contact.subject}`,
             html: `
