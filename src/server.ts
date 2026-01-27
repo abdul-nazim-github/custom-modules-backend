@@ -29,9 +29,6 @@ app.get('/api/ping', (req, res) => {
     res.status(200).json({ message: 'pong', success: true });
 });
 
-const authModule = AuthModule.init(authConfig);
-app.use('/api', authModule.router);
-
 const start = async () => {
     try {
         logger.info('📝 Change Log initiated successfully. It can be disabled from env => REQUEST_LOG="false"');
