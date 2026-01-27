@@ -7,7 +7,7 @@ export interface IContact extends Document {
     message: string;
     status: number; // 0: Unread, 1: Read, 2: Replied
     created_at: Date;
-    updated_at: Date;
+    // updated_at: Date;
 }
 
 const ContactSchema: Schema = new Schema({
@@ -17,7 +17,8 @@ const ContactSchema: Schema = new Schema({
     message: { type: String, required: true },
     status: { type: Number, default: 0 },
 }, {
-    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
+    timestamps: { createdAt: 'created_at' , updatedAt: false },
+    versionKey: false,
 });
 
 export const Contact = mongoose.model<IContact>('Contact', ContactSchema);

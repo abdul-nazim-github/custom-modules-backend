@@ -20,7 +20,7 @@ export class ContactService {
         };
 
         const contact = await this.contactRepository.create(sanitizedPayload as any);
-
+        console.log(contact, "contact");
         // Send Admin Notification
         sendEmail({
             to: process.env.ADMIN_EMAIL || 'admin@example.com',
@@ -33,8 +33,7 @@ export class ContactService {
                 <p><strong>Message:</strong> ${contact.message}</p>
             `
         }).catch(err => logger.error(`Failed to send admin email: ${err.message}`));
-
-        // Send User Auto-Reply
+        console.log("Email sent to admin" , process.env.ADMIN_EMAIL );
         sendEmail({
             to: contact.email,
             subject: 'Thank you for contacting us',

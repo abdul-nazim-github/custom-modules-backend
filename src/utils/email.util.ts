@@ -21,6 +21,7 @@ export const sendEmail = async (options: EmailOptions) => {
 
         const mailOptions = {
             from: process.env.EMAIL_FROM || 'no-reply@example.com',
+            // from:'roshni.singh@codeclouds.co.in',
             to: options.to,
             subject: options.subject,
             text: options.text,
@@ -32,7 +33,6 @@ export const sendEmail = async (options: EmailOptions) => {
         return info;
     } catch (error: any) {
         logger.error(`Error sending email: ${error.message}`);
-        // We don't throw here to prevent the whole request from failing if email fails
         return null;
     }
 };
