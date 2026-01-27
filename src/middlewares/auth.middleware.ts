@@ -41,7 +41,6 @@ export const authMiddleware = (
     }
     try {
       const decoded = jwt.verify(token, accessSecret) as any;
-
       const user = await userRepository.findById(decoded.userId);
       if (!user) {
         return res.status(401).json({
@@ -49,7 +48,6 @@ export const authMiddleware = (
           success: false
         });
       }
-
       req.user = { id: decoded.userId };
       next();
     } catch (error: any) {
