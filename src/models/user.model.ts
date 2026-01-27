@@ -1,6 +1,5 @@
 import { IsEmail, IsNotEmpty, IsString, IsOptional, MinLength, Matches } from 'class-validator';
 import { Schema, model, Document } from 'mongoose';
-import { Role } from '../config/roles.js';
 
 export class User {
     @IsEmail()
@@ -24,18 +23,8 @@ export class User {
     @IsOptional()
     metadata?: Record<string, any>;
 
-    @IsString()
-    @IsOptional()
-    role?: Role;
-
-    @IsOptional()
-    permissions?: string[];
-
     @IsOptional()
     deleted_at?: Date;
-
-    @IsOptional()
-    resetTokenUsedAt?: Date;
 }
 
 const UserSchema = new Schema({
@@ -43,10 +32,7 @@ const UserSchema = new Schema({
     password: { type: String, required: true },
     name: { type: String, required: true },
     metadata: { type: Schema.Types.Mixed, default: {} },
-    role: { type: String, enum: Object.values(Role), default: Role.USER },
-    permissions: { type: [String], default: [] },
-    deleted_at: { type: Date, default: null },
-    resetTokenUsedAt: { type: Date }
+    deleted_at: { type: Date, default: null }
 }, {
     timestamps: {
         createdAt: 'created_at',
