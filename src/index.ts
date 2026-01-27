@@ -12,8 +12,11 @@ import { ContentController } from './controllers/content.controller.js';
 import { createContentRoutes } from './routes/content.routes.js';
 import { ResetPasswordService } from './services/reset-password.service.js';
 import { ResetPasswordController } from './controllers/reset-password.controller.js';
-import { createResetPasswordRoutes } from './routes/reset-password.routes.js';  
-
+import { createResetPasswordRoutes } from './routes/reset-password.routes.js';
+import { ContactRepository } from './repositories/contact.repository.js';
+import { ContactService } from './services/contact.service.js';
+import { ContactController } from './controllers/contact.controller.js';
+import { createContactRoutes } from './routes/contact.routes.js';
 export class AuthModule {
     private config: AuthConfig;
     public router: Router;
@@ -29,17 +32,22 @@ export class AuthModule {
         const sessionService = new SessionService(sessionRepository, this.config);
         const authService = new AuthService(this.config, userRepository, sessionService);
         const authController = new AuthController(authService);
+        this.router.use('/auth', createAuthRoutes(authController, this.config.jwt.accessSecret, sessionRepository, userRepository));
 
         const contentRepository = new ContentRepository();
         const contentService = new ContentService(contentRepository);
         const contentController = new ContentController(contentService);
+        this.router.use('/content', createContentRoutes(contentController, this.config.jwt.accessSecret, sessionRepository, userRepository));
 
+        
         const resetPasswordService = new ResetPasswordService(userRepository);
         const resetPasswordController = new ResetPasswordController(resetPasswordService);
         this.router.use('/password', createResetPasswordRoutes(resetPasswordController, this.config.jwt.accessSecret, userRepository));
 
-        this.router.use('/auth', createAuthRoutes(authController, this.config.jwt.accessSecret, sessionRepository, userRepository));
-        this.router.use('/content', createContentRoutes(contentController, this.config.jwt.accessSecret, sessionRepository, userRepository));
+        const contactRepository = new ContactRepository();
+        const contactService = new ContactService(contactRepository);
+        const contactController = new ContactController(contactService);
+        this.router.use('/contact', createContactRoutes(contactController));
     }
 
     public static init(config: AuthConfig): AuthModule {
