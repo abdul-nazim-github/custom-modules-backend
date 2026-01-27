@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { ResetPasswordController } from '../controllers/reset-password.controller.js';
-import { authMiddleware } from '../middlewares/auth.middleware.js';
+import { authMiddleware } from '../middlewares/reset.middleware.js';
 import { UserRepository } from '../repositories/user.repository.js';
 
 export const createResetPasswordRoutes = (
