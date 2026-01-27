@@ -16,12 +16,14 @@ export class ContentService {
             data: {
                 id: content._id,
                 title: content.title,
-                body: content.shortDescription,
+                shortDescription: content.shortDescription,
+                content: content.content,
                 status: content.status,
                 created_at: content.created_at,
             }
         };
     }
+
 
     async getContent(id: string) {
         const content = await this.contentRepository.findById(id);
@@ -34,14 +36,15 @@ export class ContentService {
             data: {
                 id: content._id,
                 title: content.title,
-                body: content.shortDescription,
+                shortDescription: content.shortDescription,
+                content: content.content,
                 status: content.status,
                 created_at: content.created_at,
                 ...(content.updated_at && { updated_at: content.updated_at }),
             }
         };
     }
-    
+
     async listContent(filters: {
         page?: number;
         limit?: number;
@@ -57,7 +60,8 @@ export class ContentService {
             data: items.map(content => ({
                 id: content._id,
                 title: content.title,
-                body: content.shortDescription,
+                shortDescription: content.shortDescription,
+                content: content.content,
                 status: content.status,
                 created_at: content.created_at,
                 ...(content.updated_at && { updated_at: content.updated_at }),
@@ -79,7 +83,8 @@ export class ContentService {
             data: {
                 id: content._id,
                 title: content.title,
-                body: content.shortDescription,
+                shortDescription: content.shortDescription,
+                content: content.content,
                 status: content.status,
                 created_at: content.created_at,
                 updated_at: content.updated_at,

@@ -4,6 +4,7 @@ import { Schema, model, Document } from 'mongoose';
 export class Content {
     @IsString()
     @IsNotEmpty()
+    // @IsUnique({ message: 'Title must be unique' })
     title!: string;
 
     @IsString()
@@ -36,7 +37,7 @@ export class Content {
 }
 
 const ContentSchema = new Schema({
-    title: { type: String, required: true },
+    title: { type: String, required: true, unique: true },
     shortDescription: { type: String, required: true },
     content: { type: String, required: true },
     status: { type: Number, default: 1, enum: [0, 1] }, // 1 for active, 0 for inactive
