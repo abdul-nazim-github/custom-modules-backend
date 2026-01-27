@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import express from 'express';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-import { PasswordResetModule } from './index.js';
+import { AuthModule } from './index.js';
 import { logger } from './utils/logger.js';
 import { startKeepAlive } from './utils/ping.util.js';
 
@@ -17,13 +17,23 @@ const authConfig = {
     mongoUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/auth-db',
     jwt: {
         accessSecret: process.env.JWT_ACCESS_SECRET || 'access-secret',
-        accessTTL: process.env.JWT_ACCESS_TTL || '15m'
+        accessTTL: process.env.JWT_ACCESS_TTL || '15m',
+        refreshSecret: process.env.JWT_REFRESH_SECRET || 'refresh-secret',
+        refreshTTLms: parseInt(process.env.JWT_REFRESH_TTL_MS || '604800000'),
+        resetSecret: process.env.JWT_RESET_SECRET || 'reset-secret',
+        resetTTL: process.env.JWT_RESET_TTL || '15m'
     },
-    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000'
+    sessionSecret: process.env.SESSION_SECRET || 'session-secret',
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+    email: {
+        host: process.env.EMAIL_HOST || 'mail.smtp2go.com',
+        port: parseInt(process.env.EMAIL_PORT || '2525'),
+        user: process.env.EMAIL_USER || 'no-reply@my-mern-app.com',
+        pass: process.env.EMAIL_PASS || 'AG@XDK6Kz55',
+        from: process.env.EMAIL_FROM || 'ayan.ghosh@codeclouds.com'
+    }
 };
 
-const passwordResetModule = PasswordResetModule.init(authConfig);
-app.use('/api', passwordResetModule.router);
 // for keep-alive
 app.get('/api/ping', (req, res) => {
     res.status(200).json({ message: 'pong', success: true });

@@ -1,46 +1,60 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+
+import { SessionRepository } from '../repositories/session.repository.js';
 import { UserRepository } from '../repositories/user.repository.js';
+import { Role, RolePermissions } from '../config/roles.js';
 
 declare global {
   namespace Express {
     interface Request {
       user?: {
         id: string;
+        role: string;
+        permissions: string[];
       };
+      sessionId?: string;
     }
   }
 }
 
 export const authMiddleware = (
   accessSecret: string,
+  sessionRepository: SessionRepository,
   userRepository: UserRepository
 ) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({
-        message: 'Authorization header missing',
-        success: false
-      });
-    }
-
-    if (!authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        message: 'Invalid authorization format',
-        success: false
-      });
-    }
-
-    const token = authHeader.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({
-        message: 'Access token missing',
-        success: false
-      });
-    }
     try {
+      const authHeader = req.headers.authorization;
+
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          message: 'Authorization token missing',
+          success: false
+        });
+      }
+
+      const token = authHeader.split(' ')[1];
+
       const decoded = jwt.verify(token, accessSecret) as any;
+
+      if (decoded.sessionId) {
+        const session = await sessionRepository.findById(decoded.sessionId);
+        if (!session || !session.isActive) {
+          return res.status(401).json({
+            message: 'Session is no longer active',
+            success: false
+          });
+        }
+
+        if (session.userId.toString() !== decoded.userId) {
+          return res.status(401).json({
+            message: 'Session does not belong to this user',
+            success: false
+          });
+        }
+      }
+
       const user = await userRepository.findById(decoded.userId);
       if (!user) {
         return res.status(401).json({
@@ -48,17 +62,21 @@ export const authMiddleware = (
           success: false
         });
       }
-      req.user = { id: decoded.userId };
+
+      const userRole = (user.role as Role) || Role.USER;
+      req.user = {
+        id: decoded.userId,
+        role: userRole,
+        permissions: user.permissions || []
+      };
+      req.sessionId = decoded.sessionId;
+
       next();
-    } catch (error: any) {
+    } catch {
       return res.status(401).json({
-        message:
-          error.name === 'TokenExpiredError'
-            ? 'Access token expired'
-            : 'Invalid access token',
+        message: 'Invalid or expired access token',
         success: false
       });
     }
   };
 };
-
