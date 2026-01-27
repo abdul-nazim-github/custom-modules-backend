@@ -27,7 +27,7 @@ export class ContentService {
 
     async getContent(id: string) {
         const content = await this.contentRepository.findById(id);
-        if (!content) {
+        if (!content || content.deleted_at) {
             throw new Error('Content not found');
         }
 
@@ -41,7 +41,7 @@ export class ContentService {
                 status: content.status,
                 created_at: content.created_at,
                 ...(content.updated_at && { updated_at: content.updated_at }),
-            }
+            },
         };
     }
 

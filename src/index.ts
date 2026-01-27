@@ -10,6 +10,9 @@ import { ContentRepository } from './repositories/content.repository.js';
 import { ContentService } from './services/content.service.js';
 import { ContentController } from './controllers/content.controller.js';
 import { createContentRoutes } from './routes/content.routes.js';
+import { ResetPasswordService } from './services/reset-password.service.js';
+import { ResetPasswordController } from './controllers/reset-password.controller.js';
+import { createResetPasswordRoutes } from './routes/reset-password.routes.js';  
 
 export class AuthModule {
     private config: AuthConfig;
@@ -30,6 +33,10 @@ export class AuthModule {
         const contentRepository = new ContentRepository();
         const contentService = new ContentService(contentRepository);
         const contentController = new ContentController(contentService);
+
+        const resetPasswordService = new ResetPasswordService(userRepository);
+        const resetPasswordController = new ResetPasswordController(resetPasswordService);
+        this.router.use('/password', createResetPasswordRoutes(resetPasswordController, this.config.jwt.accessSecret, userRepository));
 
         this.router.use('/auth', createAuthRoutes(authController, this.config.jwt.accessSecret, sessionRepository, userRepository));
         this.router.use('/content', createContentRoutes(contentController, this.config.jwt.accessSecret, sessionRepository, userRepository));
