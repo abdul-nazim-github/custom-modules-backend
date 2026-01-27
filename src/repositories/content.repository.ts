@@ -19,6 +19,7 @@ export class ContentRepository {
         if (filters.status !== undefined) {
             query.status = filters.status;
         }
+        query.deleted_at = { $exists: false };
 
         const skip = (filters.page - 1) * filters.limit;
 
