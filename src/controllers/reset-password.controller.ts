@@ -13,6 +13,7 @@ export class ResetPasswordController {
         try {
             const userId = req.reset?.id;
             const { newPassword } = req.body;
+            const { oldPassword } = req.body;
 
             if (!userId) {
                 return res.status(401).json({
@@ -27,9 +28,16 @@ export class ResetPasswordController {
                     success: false
                 });
             }
+            if (!oldPassword) {
+                return res.status(400).json({
+                    message: 'Old password is required',
+                    success: false
+                });
+            }
 
             const result = await this.resetPasswordService.changePassword({
                 userId,
+                oldPassword,
                 newPassword
             });
 
