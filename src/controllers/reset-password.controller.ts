@@ -12,7 +12,7 @@ export class ResetPasswordController {
         try {
             const userId = req.user?.id;
             const { newPassword } = req.body;
-
+            const { oldPassword } = req.body;
             if (!userId) {
                 return res.status(401).json({
                     message: 'Unauthorized',
@@ -29,7 +29,8 @@ export class ResetPasswordController {
 
             const result = await this.resetPasswordService.changePassword({
                 userId,
-                newPassword
+                oldPassword,
+                newPassword,
             });
 
             return res.status(200).json({

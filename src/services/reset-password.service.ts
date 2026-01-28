@@ -13,6 +13,9 @@ export class ResetPasswordService {
         oldPassword: string;
         newPassword: string;
     }) {
+        if (!payload.oldPassword || !payload.newPassword) {
+            throw new Error('Old password and new password both are required');
+        }
         const user = await this.userRepository.findById(payload.userId as any);
         if (!user || user.deleted_at) {
             throw new Error('User not found');
