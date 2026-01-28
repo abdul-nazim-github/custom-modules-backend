@@ -21,8 +21,6 @@ export const createContactRoutes = (contactController: ContactController): Route
     router.post('/submit', validateBody(ContactDto), contactController.submit);
     router.get('/list', contactController.list);
     router.get('/:id', contactController.getOne);
-    router.put('/:id/status', contactController.updateStatus);
-    router.delete('/:id', contactController.delete);
 
     return router;
 };
