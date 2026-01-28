@@ -74,36 +74,4 @@ export class ContactController {
             });
         }
     };
-
-    public updateStatus = async (req: Request, res: Response) => {
-        try {
-            const { status } = req.body;
-            const result = await this.contactService.updateContactStatus(req.params.id as string, status);
-            res.json({
-                message: result.message,
-                data: result.data,
-                success: true
-            });
-        } catch (error: any) {
-            res.status(400).json({
-                message: error.message,
-                success: false
-            });
-        }
-    };
-
-    public delete = async (req: Request, res: Response) => {
-        try {
-            const result = await this.contactService.deleteContact(req.params.id as string);
-            res.json({
-                message: result.message,
-                success: true
-            });
-        } catch (error: any) {
-            res.status(400).json({
-                message: error.message,
-                success: false
-            });
-        }
-    };
 }

@@ -70,24 +70,4 @@ export class ContactService {
         };
     }
 
-    async updateContactStatus(id: string, status: number) {
-        const contact = await this.contactRepository.update(id, { status } as any);
-        if (!contact) {
-            throw new Error('Contact not found');
-        }
-        return {
-            message: 'Contact status updated successfully',
-            data: contact
-        };
-    }
-
-    async deleteContact(id: string) {
-        const contact = await this.contactRepository.delete(id);
-        if (!contact) {
-            throw new Error('Contact not found');
-        }
-        return {
-            message: 'Contact deleted successfully'
-        };
-    }
 }
