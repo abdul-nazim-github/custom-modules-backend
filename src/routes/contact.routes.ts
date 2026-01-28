@@ -18,7 +18,7 @@ const contactSubmitLimiter = rateLimit({
 export const createContactRoutes = (contactController: ContactController): Router => {
     const router = Router();
 
-    router.post('/submit', contactSubmitLimiter, validateBody(ContactDto), contactController.submit);
+    router.post('/submit', validateBody(ContactDto), contactController.submit);
     router.get('/list', contactController.list);
     router.get('/:id', contactController.getOne);
     router.put('/:id/status', contactController.updateStatus);
