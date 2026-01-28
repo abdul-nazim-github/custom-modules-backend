@@ -59,7 +59,6 @@
 //     }
 // };
 import { logger } from './logger.js';
-   
 import nodemailer from 'nodemailer';
 
 export const sendResetEmail = async (config: any, to: string, resetLink: string) => {
