@@ -10,11 +10,19 @@ export class ResetPasswordService {
 
     async changePassword(payload: {
         userId: string;
+        oldPassword: string;
         newPassword: string;
     }) {
         const user = await this.userRepository.findById(payload.userId as any);
         if (!user || user.deleted_at) {
             throw new Error('User not found');
+        }
+        if (!payload.oldPassword || !payload.newPassword) {
+            throw new Error('Old password and new password both are required');
+        }
+        const isMatch = await bcrypt.compare(payload.oldPassword, user.password);
+        if (!isMatch) {
+            throw new Error('Old password is incorrect');
         }
 
         const hashedPassword = await bcrypt.hash(payload.newPassword, 12);
