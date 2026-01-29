@@ -50,10 +50,15 @@ export class AuthModule {
         const contactRepository = new ContactRepository();
         const contactService = new ContactService(contactRepository);
         const contactController = new ContactController(contactService);
-        this.router.use('/contact', createContactRoutes(contactController));
+        this.router.use('/contact', createContactRoutes(contactController, this.config.jwt.accessSecret, userRepository));
 
         const permissionController = new PermissionController();
-        this.router.use('/permissions', createAdvPermissionRoutes(permissionController));
+        this.router.use('/permissions', createAdvPermissionRoutes(
+            permissionController,
+            this.config.jwt.accessSecret,
+            sessionRepository,
+            userRepository
+        ));
     }
 
 
