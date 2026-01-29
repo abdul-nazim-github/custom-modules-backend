@@ -3,7 +3,7 @@ import { IsEmail, IsNotEmpty, IsString, MinLength, MaxLength } from 'class-valid
 export class ContactDto {
     @IsNotEmpty({ message: 'Name is required' })
     @IsString()
-    @MaxLength(100)
+    @MaxLength(50)
     name!: string;
 
     @IsNotEmpty({ message: 'Email is required' })
@@ -11,13 +11,11 @@ export class ContactDto {
     email!: string;
 
     @IsNotEmpty({ message: 'Subject is required' })
-    @IsString()
+    @IsString({ message: 'Subject must be a string' })
     @MaxLength(200)
     subject!: string;
 
     @IsNotEmpty({ message: 'Message is required' })
-    @IsString()
-    @MinLength(10, { message: 'Message must be at least 10 characters long' })
-    @MaxLength(2000)
+    @IsString({ message: 'Message must be a string' })
     message!: string;
 }
