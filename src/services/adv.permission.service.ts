@@ -2,6 +2,7 @@ import { IPermission } from '../models/adv.permission.model.js';
 import { CreateRoleDto, UpdateRoleDto } from '../dtos/adv.permission.dto.js';
 import mongoose from 'mongoose';
 import { PermissionRepository } from '../repositories/adv.permission.repository.js';
+import { MODULES, ACTIONS, isValidModulePath } from '../config/adv.permission.js';
 
 export class PermissionService {
     private permissionRepository: PermissionRepository;
@@ -16,7 +17,7 @@ export class PermissionService {
             permissions
         };
         if (data.userId) {
-            roleData.userId = new mongoose.Types.ObjectId(data.userId);
+            roleData.userId = data.userId;
         }
         if (data.name) {
             roleData.name = data.name;
@@ -52,6 +53,8 @@ export class PermissionService {
      * Rule:
      * - SUPER_ADMIN → "*"
      * - If CREATE / EDIT / DELETE exists → VIEW must exist
+     * - Module and Submodule must exist in config
+     * - Action must be valid (view, create, edit, delete, *)
      */
     private normalizePermissions(permissions: string[]): string[] {
         if (permissions.includes('*')) {
@@ -59,15 +62,20 @@ export class PermissionService {
         }
 
         const finalPermissions = new Set<string>();
+        const validActions = [...Object.values(ACTIONS), '*'];
 
         for (const permission of permissions) {
-            finalPermissions.add(permission);
-
             const parts = permission.split('.');
             const action = parts.pop();
             const modulePath = parts.join('.');
-
-            if (action && action !== 'view') {
+            if (!action || !validActions.includes(action)) {
+                throw new Error(`Invalid action "${action}" in permission "${permission}"`);
+            }
+            if (!modulePath || !isValidModulePath(modulePath)) {
+                throw new Error(`Invalid module path "${modulePath}" in permission "${permission}"`);
+            }
+            finalPermissions.add(permission);
+            if (action !== 'view' && action !== '*') {
                 finalPermissions.add(`${modulePath}.view`);
             }
         }

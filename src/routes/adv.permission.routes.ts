@@ -3,7 +3,6 @@ import { PermissionController } from '../controllers/adv.permission.controller.j
 
 import { authMiddleware } from '../middlewares/auth.middleware.js';
 import { permissionMiddleware } from '../middlewares/permission.middleware.js';
-import { Permission } from '../config/roles.js';
 import { SessionRepository } from '../repositories/session.repository.js';
 import { UserRepository } from '../repositories/user.repository.js';
 
@@ -16,7 +15,7 @@ export const createAdvPermissionRoutes = (
     const router = Router();
 
     const auth = authMiddleware(accessSecret, sessionRepository, userRepository);
-    const hasPermission = permissionMiddleware(Permission.MANAGE_PERMISSIONS);
+    const hasPermission = permissionMiddleware('modules.permission.manage_permissions');
 
     router.use(auth, hasPermission);
 
