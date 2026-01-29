@@ -39,7 +39,7 @@ export class AuthModule {
         const contentController = new ContentController(contentService);
         this.router.use('/content', createContentRoutes(contentController, this.config.jwt.accessSecret, sessionRepository, userRepository));
 
-        
+
         const resetPasswordService = new ResetPasswordService(userRepository);
         const resetPasswordController = new ResetPasswordController(resetPasswordService);
         this.router.use('/password', createResetPasswordRoutes(resetPasswordController, this.config.jwt.accessSecret, userRepository));
@@ -47,7 +47,7 @@ export class AuthModule {
         const contactRepository = new ContactRepository();
         const contactService = new ContactService(contactRepository);
         const contactController = new ContactController(contactService);
-        this.router.use('/contact', createContactRoutes(contactController));
+        this.router.use('/contact', createContactRoutes(contactController, this.config.jwt.accessSecret, userRepository));
     }
 
     public static init(config: AuthConfig): AuthModule {
