@@ -1,43 +1,52 @@
-import { IPermission, PermissionModel } from '../models/adv.permission.model.js';
+import { IPermission } from '../models/adv.permission.model.js';
 import { CreateRoleDto, UpdateRoleDto } from '../dtos/adv.permission.dto.js';
+import mongoose from 'mongoose';
+import { PermissionRepository } from '../repositories/adv.permission.repository.js';
 
 export class PermissionService {
+    private permissionRepository: PermissionRepository;
+
+    constructor(permissionRepository: PermissionRepository) {
+        this.permissionRepository = permissionRepository;
+    }
+
     async create(data: CreateRoleDto): Promise<IPermission> {
         const permissions = this.normalizePermissions(data.permissions);
-
-        const role = new PermissionModel({
-            name: data.name,
-            userId: data.userId,
+        const roleData: any = {
             permissions
-        });
+        };
+        if (data.userId) {
+            roleData.userId = new mongoose.Types.ObjectId(data.userId);
+        }
+        if (data.name) {
+            roleData.name = data.name;
+        }
 
-        return role.save();
+        return this.permissionRepository.create(roleData);
     }
 
     async list(): Promise<IPermission[]> {
-        return PermissionModel.find().sort({ created_at: -1 });
+        return this.permissionRepository.findAll();
     }
 
     async getOne(id: string): Promise<IPermission | null> {
-        return PermissionModel.findById(id);
+        return this.permissionRepository.findById(id);
     }
 
     async update(id: string, data: UpdateRoleDto): Promise<IPermission | null> {
         if (data.permissions) {
             data.permissions = this.normalizePermissions(data.permissions);
         }
-
-        return PermissionModel.findByIdAndUpdate(
-            id,
-            data,
-            { new: true }
-        );
+        const updateData: any = { ...data };
+        if (data.userId) {
+            updateData.userId = new mongoose.Types.ObjectId(data.userId);
+        }
+        return this.permissionRepository.update(id, updateData);
     }
 
     async delete(id: string): Promise<IPermission | null> {
-        return PermissionModel.findByIdAndDelete(id);
+        return this.permissionRepository.delete(id);
     }
-
 
     /**
      * Rule:
@@ -54,11 +63,12 @@ export class PermissionService {
         for (const permission of permissions) {
             finalPermissions.add(permission);
 
-            const [module, action] = permission.split(':');
+            const parts = permission.split('.');
+            const action = parts.pop();
+            const modulePath = parts.join('.');
 
-            // Any non-view action requires view
-            if (action !== 'view') {
-                finalPermissions.add(`${module}:view`);
+            if (action && action !== 'view') {
+                finalPermissions.add(`${modulePath}.view`);
             }
         }
 

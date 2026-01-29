@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
-import {PermissionService} from '../services/adv.permission.service.js';
-import {MODULES , ACTIONS , generateMatrix} from '../config/adv.permission.js';
+import { PermissionService } from '../services/adv.permission.service.js';
+import { MODULES, ACTIONS, generateMatrix } from '../config/adv.permission.js';
 
 export class PermissionController {
     private permissionService: PermissionService;
 
-    constructor() {
-        this.permissionService = new PermissionService();
+    constructor(permissionService: PermissionService) {
+        this.permissionService = permissionService;
     }
 
     create = async (req: Request, res: Response) => {
@@ -18,6 +18,13 @@ export class PermissionController {
                 data: permission
             });
         } catch (error: any) {
+            if (error.code === 11000) {
+                const field = Object.keys(error.keyPattern)[0];
+                return res.status(400).json({
+                    message: `A permission with this ${field} already exists`,
+                    success: false
+                });
+            }
             res.status(500).json({
                 message: error.message || 'Internal server error',
                 success: false
@@ -82,6 +89,13 @@ export class PermissionController {
                 data: permission
             });
         } catch (error: any) {
+            if (error.code === 11000) {
+                const field = Object.keys(error.keyPattern)[0];
+                return res.status(400).json({
+                    message: `A permission with this ${field} already exists`,
+                    success: false
+                });
+            }
             res.status(500).json({
                 message: error.message || 'Internal server error',
                 success: false

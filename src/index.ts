@@ -19,6 +19,8 @@ import { ContactController } from './controllers/contact.controller.js';
 import { createContactRoutes } from './routes/contact.routes.js';
 import { PermissionController } from './controllers/adv.permission.controller.js';
 import { createAdvPermissionRoutes } from './routes/adv.permission.routes.js';
+import { PermissionRepository } from './repositories/adv.permission.repository.js';
+import { PermissionService } from './services/adv.permission.service.js';
 
 export class AuthModule {
     private config: AuthConfig;
@@ -52,7 +54,9 @@ export class AuthModule {
         const contactController = new ContactController(contactService);
         this.router.use('/contact', createContactRoutes(contactController, this.config.jwt.accessSecret, userRepository));
 
-        const permissionController = new PermissionController();
+        const permissionRepository = new PermissionRepository();
+        const permissionService = new PermissionService(permissionRepository);
+        const permissionController = new PermissionController(permissionService);
         this.router.use('/permissions', createAdvPermissionRoutes(
             permissionController,
             this.config.jwt.accessSecret,

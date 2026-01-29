@@ -23,13 +23,25 @@ export const granularPermissionMiddleware = (requiredPermission: string) => {
             });
         }
 
-        if (!permissionDoc.permissions.includes(requiredPermission)) {
+        // if (!permissionDoc.permissions.includes(requiredPermission)) {
+        //     return res.status(403).json({
+        //         message: 'Forbidden: Missing required permission',
+        //         success: false
+        //     });
+        // }
+        const hasPermission =
+            permissionDoc.permissions.includes('*') ||
+            permissionDoc.permissions.includes(requiredPermission) ||
+            permissionDoc.permissions.includes(
+                requiredPermission.split('.').slice(0, -1).join('.') + '.*'
+            );
+
+        if (!hasPermission) {
             return res.status(403).json({
                 message: 'Forbidden: Missing required permission',
                 success: false
             });
         }
-
         next();
     };
 };

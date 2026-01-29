@@ -20,12 +20,12 @@ export const createAdvPermissionRoutes = (
 
     router.use(auth, hasPermission);
 
-    router.post('/', permissionController.create);
-    router.get('/', permissionController.list);
+    router.post('/create', permissionController.create);
+    router.get('/list', permissionController.list);
     router.get('/matrix', permissionController.getMatrix);
-    router.get('/:id', permissionController.getOne);
-    router.put('/:id', permissionController.update);
-    router.delete('/:id', permissionController.delete);
+    router.get('/view/:id', permissionController.getOne);
+    router.put('/update/:id', permissionController.update);
+    router.delete('/delete/:id', permissionController.delete);
 
     return router;
 };
