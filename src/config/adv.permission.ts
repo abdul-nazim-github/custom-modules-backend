@@ -41,7 +41,7 @@ export const getPermission = (
         ? `${module}:${submodule}:${action}`
         : `${module}:${action}`;
 };
-export const     = (): string[] => {
+export const generateMatrix = (): string[] => {
     const permissions: string[] = [];
     Object.values(MODULES).forEach(module => {
         Object.values(ACTIONS).forEach(action => {

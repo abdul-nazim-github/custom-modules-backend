@@ -17,6 +17,9 @@ import { ContactRepository } from './repositories/contact.repository.js';
 import { ContactService } from './services/contact.service.js';
 import { ContactController } from './controllers/contact.controller.js';
 import { createContactRoutes } from './routes/contact.routes.js';
+import { PermissionController } from './controllers/adv.permission.controller.js';
+import { createAdvPermissionRoutes } from './routes/adv.permission.routes.js';
+
 export class AuthModule {
     private config: AuthConfig;
     public router: Router;
@@ -39,7 +42,7 @@ export class AuthModule {
         const contentController = new ContentController(contentService);
         this.router.use('/content', createContentRoutes(contentController, this.config.jwt.accessSecret, sessionRepository, userRepository));
 
-        
+
         const resetPasswordService = new ResetPasswordService(userRepository);
         const resetPasswordController = new ResetPasswordController(resetPasswordService);
         this.router.use('/password', createResetPasswordRoutes(resetPasswordController, this.config.jwt.accessSecret, userRepository));
@@ -48,7 +51,11 @@ export class AuthModule {
         const contactService = new ContactService(contactRepository);
         const contactController = new ContactController(contactService);
         this.router.use('/contact', createContactRoutes(contactController));
+
+        const permissionController = new PermissionController();
+        this.router.use('/permissions', createAdvPermissionRoutes(permissionController));
     }
+
 
     public static init(config: AuthConfig): AuthModule {
         return new AuthModule(config);

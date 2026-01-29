@@ -2,8 +2,12 @@ import { IsString, IsNotEmpty, IsArray, IsOptional } from 'class-validator';
 
 export class CreateRoleDto {
     @IsString()
-    @IsNotEmpty()
-    name!: string;
+    @IsOptional()
+    name?: string;
+
+    @IsString()
+    @IsOptional()
+    userId?: string;
 
     @IsArray()
     @IsString({ each: true })
@@ -14,6 +18,10 @@ export class UpdateRoleDto {
     @IsString()
     @IsOptional()
     name?: string;
+
+    @IsString()
+    @IsOptional()
+    userId?: string;
 
     @IsArray()
     @IsString({ each: true })

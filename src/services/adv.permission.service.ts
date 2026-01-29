@@ -1,4 +1,4 @@
-import { IPermission , PermissionModel } from '../models/adv.permission.model.js';
+import { IPermission, PermissionModel } from '../models/adv.permission.model.js';
 import { CreateRoleDto, UpdateRoleDto } from '../dtos/adv.permission.dto.js';
 
 export class PermissionService {
@@ -7,6 +7,7 @@ export class PermissionService {
 
         const role = new PermissionModel({
             name: data.name,
+            userId: data.userId,
             permissions
         });
 
@@ -37,7 +38,7 @@ export class PermissionService {
         return PermissionModel.findByIdAndDelete(id);
     }
 
-   
+
     /**
      * Rule:
      * - SUPER_ADMIN → "*"
