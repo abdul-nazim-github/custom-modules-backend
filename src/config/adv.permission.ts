@@ -23,7 +23,6 @@ export const MODULES = {
                 submodules: {}
             },
         }
-
     }
 } as const;
 
