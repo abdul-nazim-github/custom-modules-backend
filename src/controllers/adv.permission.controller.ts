@@ -77,7 +77,7 @@ export class PermissionController {
             const permission = await this.permissionService.update(req.params.id as string, req.body);
 
             if (!permission) {
-                return res.status(404).json({
+                return res.status(403).json({
                     message: 'Permission not found',
                     success: false
                 });
@@ -108,7 +108,7 @@ export class PermissionController {
             const permission = await this.permissionService.delete(req.params.id as string);
 
             if (!permission) {
-                return res.status(404).json({
+                return res.status(403).json({
                     message: 'Permission not found',
                     success: false
                 });
