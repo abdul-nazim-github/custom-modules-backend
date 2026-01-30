@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 export interface IPermission extends Document {
     name?: string;
-    userId?: mongoose.Types.ObjectId;
+    userId?: mongoose.Types.ObjectId | any;
     permissions: string[];
     created_at: Date;
     updated_at: Date;

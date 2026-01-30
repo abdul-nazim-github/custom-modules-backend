@@ -12,12 +12,10 @@ export class PermissionService {
     }
 
     async create(data: CreateRoleDto): Promise<IPermission> {
-        // Fetch default permissions from DB
         const config = await ConfigModel.findOne({ slug: 'adv-permission-defaults' });
         const defaultPerms = config ? config.permissions : ['profile.*'];
         const requestedPerms = data.permissions || [];
 
-        // 1. Check for internal duplicates in the request
         const seenInRequest = new Set<string>();
         for (const p of requestedPerms) {
             if (seenInRequest.has(p)) {
@@ -25,8 +23,6 @@ export class PermissionService {
             }
             seenInRequest.add(p);
         }
-
-        // 2. Check for redundancies between request and defaults
         for (const p of requestedPerms) {
             for (const dp of defaultPerms) {
                 if (this.isCoveredBy(p, dp)) {
@@ -49,28 +45,45 @@ export class PermissionService {
             roleData.name = data.name;
         }
 
-        return this.permissionRepository.create(roleData);
+        const permission = await this.permissionRepository.create(roleData);
+        return this.formatPermissionResponse(permission);
     }
 
-    async list(): Promise<IPermission[]> {
-        return this.permissionRepository.findAll();
+    async list(): Promise<any[]> {
+        const permissions = await this.permissionRepository.findAll();
+        return permissions.map(p => this.formatPermissionResponse(p));
     }
 
-    async getOne(id: string): Promise<IPermission | null> {
-        return this.permissionRepository.findById(id);
+    async getOne(id: string): Promise<any | null> {
+        const permission = await this.permissionRepository.findById(id);
+        return permission ? this.formatPermissionResponse(permission) : null;
     }
 
-    async update(id: string, data: UpdateRoleDto): Promise<IPermission | null> {
+    private formatPermissionResponse(p: IPermission) {
+        const obj = p.toObject ? p.toObject() : p;
+        const user = obj.userId && typeof obj.userId === 'object' ? {
+            id: obj.userId._id,
+            name: obj.userId.name,
+            email: obj.userId.email
+        } : null;
+
+        delete obj.userId;
+        return {
+            ...obj,
+            user
+        };
+    }
+
+    async update(id: string, data: UpdateRoleDto): Promise<any | null> {
         if (data.permissions) {
-            // Optional: You might want to check redundancies here too against current record or defaults
-            // But for now, just normalize
             data.permissions = this.normalizePermissions(data.permissions);
         }
         const updateData: any = { ...data };
         if (data.userId) {
             updateData.userId = new mongoose.Types.ObjectId(data.userId);
         }
-        return this.permissionRepository.update(id, updateData);
+        const permission = await this.permissionRepository.update(id, updateData);
+        return permission ? this.formatPermissionResponse(permission) : null;
     }
 
     async delete(id: string): Promise<IPermission | null> {
@@ -121,7 +134,6 @@ export class PermissionService {
             }
         }
 
-        // Clean up redundancies (if profile.* exists, remove profile.view)
         const sorted = Array.from(finalPermissions).sort((a, b) => b.length - a.length);
         const result = new Set<string>();
 
