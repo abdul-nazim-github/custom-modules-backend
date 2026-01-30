@@ -50,7 +50,7 @@ export class PermissionController {
 
     getOne = async (req: Request, res: Response) => {
         try {
-            const permission = await this.permissionService.getOne(req.params.id);
+            const permission = await this.permissionService.getOne(req.params.id as string);
 
             if (!permission) {
                 return res.status(404).json({
@@ -74,7 +74,7 @@ export class PermissionController {
 
     update = async (req: Request, res: Response) => {
         try {
-            const permission = await this.permissionService.update(req.params.id, req.body);
+            const permission = await this.permissionService.update(req.params.id as string, req.body);
 
             if (!permission) {
                 return res.status(404).json({
@@ -105,7 +105,7 @@ export class PermissionController {
 
     delete = async (req: Request, res: Response) => {
         try {
-            const permission = await this.permissionService.delete(req.params.id);
+            const permission = await this.permissionService.delete(req.params.id as string);
 
             if (!permission) {
                 return res.status(404).json({

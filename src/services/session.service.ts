@@ -33,6 +33,10 @@ export class SessionService {
         await this.sessionRepository.deactivateById(sessionId);
     }
 
+    async deactivateAllForUser(userId: string) {
+        await this.sessionRepository.deactivateAllForUser(userId);
+    }
+
     async validateSession(sessionId: string) {
         const session = await this.sessionRepository.findById(sessionId);
         if (!session || !session.isActive) {
