@@ -7,6 +7,10 @@ export const MODULES = {
         key: 'settings',
         submodules: {}
     },
+    CLOSETAB: {
+        key: 'closetab',
+        submodules: {}
+    },
     ACTIVITY: {
         key: 'activity',
         submodules: {}
@@ -17,8 +21,7 @@ export const MODULES = {
             EMAIL: {
                 key: 'email',
                 submodules: {}
-            }
-
+            },
         }
 
     }
@@ -29,7 +32,8 @@ export const ACTIONS = {
     VIEW: 'view',
     CREATE: 'create',
     EDIT: 'edit',
-    DELETE: 'delete'
+    DELETE: 'delete',
+    TAB: 'tab',
 } as const;
 
 
