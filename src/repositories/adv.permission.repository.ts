@@ -21,4 +21,11 @@ export class PermissionRepository {
     async delete(id: string): Promise<IPermission | null> {
         return await PermissionModel.findByIdAndDelete(id);
     }
+     async updatePermissions(userId: string, permissions: string[]) {
+            return PermissionModel.findByIdAndUpdate(
+                userId,
+                { permissions },
+                { new: true }
+            );
+        }
 }
