@@ -54,7 +54,6 @@ export const isValidModulePath = (path: string): boolean => {
     let current: any = MODULES;
 
     for (const part of parts) {
-        // Find the module object that has the matching key
         const found = Object.values(current).find((m: any) => m.key === part) as any;
         if (!found) return false;
         current = found.submodules || {};
