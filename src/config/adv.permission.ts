@@ -26,7 +26,6 @@ export const MODULES = {
     }
 } as const;
 
-
 export const ACTIONS = {
     VIEW: 'view',
     CREATE: 'create',
