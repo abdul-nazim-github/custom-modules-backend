@@ -40,9 +40,14 @@ export const authMiddleware = (
 
       if (decoded.sessionId) {
         const session = await sessionRepository.findById(decoded.sessionId);
-        if (!session || !session.isActive) {
+        const isExpired = session && new Date() > session.expiresAt;
+
+        if (!session || !session.isActive || isExpired) {
+          if (session && session.isActive && isExpired) {
+            await sessionRepository.deactivateById(session._id.toString());
+          }
           return res.status(401).json({
-            message: 'Session is no longer active',
+            message: 'Session is no longer active or has expired',
             success: false
           });
         }

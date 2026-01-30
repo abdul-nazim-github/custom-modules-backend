@@ -85,6 +85,9 @@ export class AuthService {
             throw new Error('Invalid credentials');
         }
 
+        // Deactivate all existing sessions for this user before creating a new one
+        await this.sessionService.deactivateAllForUser(user._id.toString());
+
         const { session, refreshToken } = await this.sessionService.createSession(
             user._id as Types.ObjectId,
             payload.device
