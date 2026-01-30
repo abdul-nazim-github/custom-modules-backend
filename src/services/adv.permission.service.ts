@@ -74,6 +74,7 @@ export class PermissionService {
         };
     }
 
+    
     async update(id: string, data: UpdateRoleDto): Promise<any | null> {
         if (data.permissions) {
             data.permissions = this.normalizePermissions(data.permissions);
