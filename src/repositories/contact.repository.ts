@@ -12,7 +12,7 @@ export class ContactRepository {
         }
 
         const items = await Contact.find(query)
-            .sort({ created_at: -1 })
+            .sort({ name: 1, created_at: -1 }) // Sort by name, then newest first
             .skip((filters.page - 1) * filters.limit)
             .limit(filters.limit);
 

@@ -55,6 +55,7 @@ export class UserRepository {
                 .skip(skip)
                 .limit(filters.limit)
                 .select('-password')
+                .sort({ name: 1, created_at: -1 }) // Sort by name, then newest first
                 .exec(),
             UserModel.countDocuments(query)
         ]);
