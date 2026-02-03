@@ -21,7 +21,11 @@ import { PermissionController } from './controllers/adv.permission.controller.js
 import { createAdvPermissionRoutes } from './routes/adv.permission.routes.js';
 import { PermissionRepository } from './repositories/adv.permission.repository.js';
 import { PermissionService } from './services/adv.permission.service.js';
-
+import { RoleService } from './services/role.service.js';
+import { RoleController } from './controllers/role.controller.js';
+import { createRoleRoutes } from './routes/role.routes.js';
+import { UserController } from './controllers/user.controller.js';
+import { createUserRoutes } from './routes/user.routes.js';
 export class AuthModule {
     private config: AuthConfig;
     public router: Router;
@@ -63,8 +67,26 @@ export class AuthModule {
             sessionRepository,
             userRepository
         ));
-    }
 
+        // 1. Independent Role Module
+        const roleService = new RoleService(permissionService);
+        const roleController = new RoleController(roleService);
+        this.router.use('/roles', createRoleRoutes(
+            roleController,
+            this.config.jwt.accessSecret,
+            sessionRepository,
+            userRepository
+        ));
+
+        // 2. User Access Integration
+        const userController = new UserController(roleService);
+        this.router.use('/users', createUserRoutes(
+            userController,
+            this.config.jwt.accessSecret,
+            sessionRepository,
+            userRepository
+        ));
+    }
 
     public static init(config: AuthConfig): AuthModule {
         return new AuthModule(config);
