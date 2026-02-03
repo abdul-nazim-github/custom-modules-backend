@@ -22,6 +22,7 @@ export const createRoleRoutes = (
     router.post('/create', validateBody(RoleUserDto), roleController.create);
     router.get('/list', roleController.list);
     router.put('/update/:id', validateBody(UpdateRoleUserDto), roleController.update);
+    // may be needed (the delete one 
     router.delete('/delete/:id', roleController.delete);
     return router;
 };

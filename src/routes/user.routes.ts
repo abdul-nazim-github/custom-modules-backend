@@ -19,8 +19,9 @@ export const createUserRoutes = (
     const hasPermission = permissionMiddleware('modules.permission.manage_users');
     router.use(auth, hasPermission);
 
+    // abit confusing route name but keeping for backward compatibility
     router.post('/assign-access', validateBody(AssignAccessByEmailDto), userController.assignAccessByEmail);
     router.post('/create', userController.create);
-    router.put('/:id/access', userController.syncAccess);
+    router.put('/:id/updateAccess', userController.syncAccess);
     return router;
 };

@@ -11,8 +11,6 @@ export const permissionMiddleware = (requiredPermission: string) => {
                 success: false
             });
         }
-
-        // SUPER_ADMIN has all permissions - Global Bypass
         if (user.role === Role.SUPER_ADMIN || user.role === 'super_admin') {
             return next();
         }
