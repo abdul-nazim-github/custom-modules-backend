@@ -7,7 +7,8 @@ export class RoleController {
     create = async (req: Request, res: Response) => {
         try {
             const role = await this.roleService.createRole(req.body);
-            res.status(201).json({ message: 'Role created', success: true, data: role });
+            const { updated_at, ...data } = role.toObject();
+            res.status(201).json({ message: 'Role created', success: true, data });
         } catch (error: any) {
             res.status(500).json({ message: error.message, success: false });
         }
@@ -25,6 +26,9 @@ export class RoleController {
     update = async (req: Request, res: Response) => {
         try {
             const role = await this.roleService.updateRole(req.params.id, req.body);
+            if (!role) {
+                return res.status(404).json({ message: 'Role not found', success: false });
+            }
             res.status(200).json({ message: 'Role updated', success: true, data: role });
         } catch (error: any) {
             res.status(500).json({ message: error.message, success: false });
