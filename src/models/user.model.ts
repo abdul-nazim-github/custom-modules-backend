@@ -43,7 +43,7 @@ const UserSchema = new Schema({
     password: { type: String, required: true },
     name: { type: String, required: true },
     metadata: { type: Schema.Types.Mixed, default: {} },
-    role: { type: String, enum: Object.values(Role), default: Role.USER },
+    role: { type: String, default: 'user' },
     permissions: { type: [String], default: [] },
     deleted_at: { type: Date, default: null },
     resetTokenUsedAt: { type: Date }
