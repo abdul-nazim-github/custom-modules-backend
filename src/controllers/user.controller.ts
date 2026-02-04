@@ -11,12 +11,13 @@ export class UserController {
     create = async (req: Request, res: Response) => {
         try {
             const { role, custom_permissions, email } = req.body;
+            const roleInput = Array.isArray(role) ? role : (role ? [role] : []);
 
-            const finalPermissions = await this.roleService.resolveUserPermissions(role, custom_permissions || []);
+            const finalPermissions = await this.roleService.resolveUserPermissions(roleInput, custom_permissions || []);
 
             const user = await UserModel.create({
                 email,
-                role,
+                role: roleInput,
                 permissions: finalPermissions
             });
 
@@ -33,11 +34,12 @@ export class UserController {
         try {
             const { id } = req.params;
             const { role, custom_permissions } = req.body;
+            const roleInput = Array.isArray(role) ? role : (role ? [role] : []);
 
-            const finalPermissions = await this.roleService.resolveUserPermissions(role, custom_permissions || []);
+            const finalPermissions = await this.roleService.resolveUserPermissions(roleInput, custom_permissions || []);
 
             const updated = await UserModel.findByIdAndUpdate(id, {
-                role,
+                role: roleInput,
                 permissions: finalPermissions
             }, { new: true });
 
@@ -53,15 +55,16 @@ export class UserController {
     assignAccessByEmail = async (req: Request, res: Response) => {
         try {
             const { email, role, custom_permissions } = req.body;
+            const roleInput = Array.isArray(role) ? role : (role ? [role] : []);
 
             const user = await UserModel.findOne({ email });
             if (!user) {
                 return res.status(404).json({ message: 'User not found', success: false });
             }
 
-            const finalPermissions = await this.roleService.resolveUserPermissions(role, custom_permissions || []);
+            const finalPermissions = await this.roleService.resolveUserPermissions(roleInput, custom_permissions || []);
 
-            user.role = role as any;
+            user.role = roleInput as any;
             user.permissions = finalPermissions;
             await user.save();
 
