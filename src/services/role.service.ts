@@ -16,8 +16,8 @@ export class RoleService {
         return await RoleModel.find().sort({ name: 1 });
     }
 
-    async getBySlug(slug: string) {
-        return await RoleModel.findOne({ slug });
+    async getByName(name: string) {
+        return await RoleModel.findOne({ name });
     }
 
     async updateRole(id: string, data: UpdateRoleUserDto) {
@@ -34,10 +34,18 @@ export class RoleService {
     /**
      * Resolves the final permission set for a user based on their role and any custom overrides.
      */
-    async resolveUserPermissions(roleSlug: string, custom: string[] = []): Promise<string[]> {
-        if (roleSlug === 'super_admin') return ['*'];
-        const blueprint = await this.getBySlug(roleSlug);
-        const basePermissions = blueprint ? blueprint.permissions : [];
+    async resolveUserPermissions(roleNames: string | string[], custom: string[] = []): Promise<string[]> {
+        const roles = Array.isArray(roleNames) ? roleNames : [roleNames];
+        if (roles.includes('super_admin')) return ['*'];
+
+        let basePermissions: string[] = [];
+        for (const roleName of roles) {
+            const blueprint = await this.getByName(roleName);
+            if (blueprint && blueprint.permissions) {
+                basePermissions = [...basePermissions, ...blueprint.permissions];
+            }
+        }
+
         const combined = [...new Set([...basePermissions, ...custom])];
         return this.permissionService.normalizePermissions(combined);
     }

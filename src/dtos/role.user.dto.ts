@@ -1,14 +1,10 @@
-import { IsArray, IsNotEmpty, IsString, IsOptional, Matches } from 'class-validator';
+import { IsArray, IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
 export class RoleUserDto {
     @IsString()
     @IsNotEmpty()
-    name!: string;
-
-    @IsString()
     @IsNotEmpty()
-    @Matches(/^[a-z0-9-]+$/, { message: 'Slug must be lowercase alphanumeric with hyphens' })
-    slug!: string;
+    name!: string;
 
     @IsArray()
     @IsString({ each: true })
