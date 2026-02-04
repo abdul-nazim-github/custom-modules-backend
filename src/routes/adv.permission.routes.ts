@@ -15,7 +15,7 @@ export const createAdvPermissionRoutes = (
     const router = Router();
 
     const auth = authMiddleware(accessSecret, sessionRepository, userRepository);
-    const hasPermission = permissionMiddleware('modules.permission.manage_permissions');
+    const hasPermission = permissionMiddleware('modules~permission~manage_permissions');
     router.use(auth, hasPermission);
 
     router.post('/create', permissionController.create);
