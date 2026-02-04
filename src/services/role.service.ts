@@ -6,6 +6,10 @@ export class RoleService {
     constructor(private permissionService: PermissionService) { }
 
     async createRole(data: RoleUserDto) {
+        const existing = await this.getByName(data.name);
+        if (existing) {
+            throw new Error(`Role '${data.name}' already exists`);
+        }
         if (data.permissions) {
             data.permissions = this.permissionService.normalizePermissions(data.permissions);
         }
