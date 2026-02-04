@@ -16,7 +16,7 @@ export const createUserRoutes = (
     const router = Router();
 
     const auth = authMiddleware(accessSecret, sessionRepository, userRepository);
-    const hasPermission = permissionMiddleware('modules.permission.manage_users');
+    const hasPermission = permissionMiddleware('modules~permission~manage_users');
     router.use(auth, hasPermission);
 
     // abit confusing route name but keeping for backward compatibility
