@@ -41,7 +41,10 @@ export class RoleService {
         let basePermissions: string[] = [];
         for (const roleName of roles) {
             const blueprint = await this.getByName(roleName);
-            if (blueprint && blueprint.permissions) {
+            if (!blueprint) {
+                throw new Error(`Invalid role: ${roleName}`);
+            }
+            if (blueprint.permissions) {
                 basePermissions = [...basePermissions, ...blueprint.permissions];
             }
         }
