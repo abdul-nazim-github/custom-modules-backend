@@ -27,7 +27,7 @@ export class ContentRepository {
             ContentModel.find(query)
                 .skip(skip)
                 .limit(filters.limit)
-                .sort({ created_at: -1 })
+                .sort({ title: 1, created_at: -1 }) // Sort by title, then newest first
                 .exec(),
             ContentModel.countDocuments(query)
         ]);

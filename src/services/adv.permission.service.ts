@@ -13,7 +13,8 @@ export class PermissionService {
 
     async create(data: CreateRoleDto): Promise<IPermission> {
         const config = await ConfigModel.findOne({ slug: 'adv-permission-defaults' });
-        const defaultPerms = config ? config.permissions : ['profile.*'];
+        console.log('Default permission config:', config);
+        const defaultPerms = config ? config.permissions : [];
         const requestedPerms = data.permissions || [];
 
         const seenInRequest = new Set<string>();
@@ -74,7 +75,7 @@ export class PermissionService {
         };
     }
 
-    
+
     async update(id: string, data: UpdateRoleDto): Promise<any | null> {
         if (data.permissions) {
             data.permissions = this.normalizePermissions(data.permissions);
@@ -111,7 +112,7 @@ export class PermissionService {
      * - Module and Submodule must exist in config
      * - Action must be valid (view, create, edit, delete, *)
      */
-    private normalizePermissions(permissions: string[]): string[] {
+    public normalizePermissions(permissions: string[]): string[] {
         if (permissions.includes('*')) {
             return ['*'];
         }
@@ -127,7 +128,7 @@ export class PermissionService {
                 throw new Error(`Invalid action "${action}" in permission "${permission}"`);
             }
             if (!modulePath || !isValidModulePath(modulePath)) {
-                throw new Error(`Bad Request: Invalid permission: ${permission}`);
+                throw new Error(`Bad Request: Invalid module: ${modulePath}`);
             }
             finalPermissions.add(permission);
             if (action !== 'view' && action !== '*') {
@@ -152,7 +153,7 @@ export class PermissionService {
     async assignDefaultPermissions(userId: string, requestedPermissions: string[]) {
         const config = await ConfigModel.findOne({ slug: 'adv-permission-defaults' });
         console.log('Default permission config:', config);
-        const defaultPerms = config ? config.permissions : ['profile.*'];
+        const defaultPerms = config ? config.permissions : [];
         console.log('Default permissions to assign:', defaultPerms);
         const finalPermissions = this.normalizePermissions([...defaultPerms, ...requestedPermissions]);
         console.log('Final permissions to assign:', finalPermissions);

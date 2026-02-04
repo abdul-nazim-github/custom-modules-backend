@@ -11,9 +11,7 @@ export const permissionMiddleware = (requiredPermission: string) => {
                 success: false
             });
         }
-
-        // SUPER_ADMIN has all permissions
-        if (user.role === Role.SUPER_ADMIN) {
+        if (user.role === Role.SUPER_ADMIN || user.role === 'super_admin') {
             return next();
         }
         const userPermissions = user.permissions || [];
@@ -26,10 +24,9 @@ export const permissionMiddleware = (requiredPermission: string) => {
             }
             return false;
         });
-
         if (!hasPermission) {
             return res.status(403).json({
-                message: 'Forbidden: You do not have the required permission',
+                message: `Forbidden: You do not have the required permission (${requiredPermission})`,
                 success: false
             });
         }
