@@ -9,6 +9,7 @@ export class AssignAccessByEmailDto {
     @IsNotEmpty()
     role!: string;
 
+    
     @IsArray()
     @IsString({ each: true })
     @IsOptional()
