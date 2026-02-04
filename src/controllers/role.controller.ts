@@ -25,7 +25,7 @@ export class RoleController {
 
     update = async (req: Request, res: Response) => {
         try {
-            const role = await this.roleService.updateRole(req.params.id, req.body);
+            const role = await this.roleService.updateRole(req.params.id as string, req.body);
             if (!role) {
                 return res.status(404).json({ message: 'Role not found', success: false });
             }
@@ -37,7 +37,7 @@ export class RoleController {
 
     delete = async (req: Request, res: Response) => {
         try {
-            await this.roleService.deleteRole(req.params.id);
+            await this.roleService.deleteRole(req.params.id as string);
             res.status(200).json({ message: 'Role deleted', success: true });
         } catch (error: any) {
             res.status(500).json({ message: error.message, success: false });
