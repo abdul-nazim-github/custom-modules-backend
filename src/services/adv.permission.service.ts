@@ -13,7 +13,8 @@ export class PermissionService {
 
     async create(data: CreateRoleDto): Promise<IPermission> {
         const config = await ConfigModel.findOne({ slug: 'adv-permission-defaults' });
-        const defaultPerms = config ? config.permissions : ['profile.*'];
+        console.log('Default permission config:', config);
+        const defaultPerms = config ? config.permissions : [];
         const requestedPerms = data.permissions || [];
 
         const seenInRequest = new Set<string>();
@@ -152,7 +153,7 @@ export class PermissionService {
     async assignDefaultPermissions(userId: string, requestedPermissions: string[]) {
         const config = await ConfigModel.findOne({ slug: 'adv-permission-defaults' });
         console.log('Default permission config:', config);
-        const defaultPerms = config ? config.permissions : ['profile.*'];
+        const defaultPerms = config ? config.permissions : [];
         console.log('Default permissions to assign:', defaultPerms);
         const finalPermissions = this.normalizePermissions([...defaultPerms, ...requestedPermissions]);
         console.log('Final permissions to assign:', finalPermissions);
