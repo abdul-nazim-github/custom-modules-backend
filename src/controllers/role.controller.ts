@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { RoleService } from '../services/role.service.js';
-import { AppError } from '../utils/errors.js';
+
 
 export class RoleController {
     constructor(private roleService: RoleService) { }
