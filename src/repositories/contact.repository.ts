@@ -18,8 +18,8 @@ export class ContactRepository {
         }
         if (filters.search) {
             query.$or = [
-                { name: filters.search },
-                { email: filters.search }
+                { name: { $regex: filters.search, $options: 'i' } },
+                { email: { $regex: filters.search, $options: 'i' } }
             ];
         }
 

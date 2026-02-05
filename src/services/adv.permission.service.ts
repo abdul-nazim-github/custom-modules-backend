@@ -50,23 +50,9 @@ export class PermissionService {
         return this.formatPermissionResponse(permission);
     }
 
-    async list(filters: {
-        page?: number;
-        limit?: number;
-        search?: string;
-        sort?: string;
-    }): Promise<{ items: any[]; totalCount: number }> {
-        const { items, totalCount } = await this.permissionRepository.findAll({
-            page: filters.page || 1,
-            limit: filters.limit || 10,
-            search: filters.search,
-            sort: filters.sort
-        });
-
-        return {
-            items: items.map(p => this.formatPermissionResponse(p)),
-            totalCount
-        };
+    async list(): Promise<any[]> {
+        const permissions = await this.permissionRepository.findAll();
+        return permissions.map(p => this.formatPermissionResponse(p));
     }
 
     async getOne(id: string): Promise<any | null> {

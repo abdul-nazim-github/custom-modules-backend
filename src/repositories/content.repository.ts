@@ -22,7 +22,7 @@ export class ContentRepository {
             query.status = filters.status;
         }
         if (filters.search) {
-            query.title = filters.search;
+            query.title = { $regex: filters.search, $options: 'i' };
         }
         query.deleted_at = { $exists: false };
 
