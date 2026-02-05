@@ -18,11 +18,11 @@ export class RoleService {
     }
 
     async listRoles() {
-        return await RoleModel.find().sort({ name: 1 });
+        return await RoleModel.find({ deleted_at: null }).sort({ name: 1 });
     }
 
     async getByName(name: string) {
-        return await RoleModel.findOne({ name });
+        return await RoleModel.findOne({ name, deleted_at: null });
     }
 
     async updateRole(id: string, data: UpdateRoleUserDto) {
@@ -33,16 +33,13 @@ export class RoleService {
     }
 
     async deleteRole(id: string) {
-        // First, get the role to check its name
-        const role = await RoleModel.findById(id);
+        // First, get the role to check its name and if it exists
+        const role = await RoleModel.findOne({ _id: id, deleted_at: null });
         if (!role) {
-            throw new Error('Role not found');
+            throw new Error('Role not found or already deleted');
         }
-
-        // Check if any users have this role assigned
         const usersWithRole = await UserModel.countDocuments({
-            role: role.name,
-            deleted_at: null
+            role: role.name
         });
 
         if (usersWithRole > 0) {
@@ -50,8 +47,11 @@ export class RoleService {
                 `Cannot delete role '${role.name}' because it is assigned to ${usersWithRole} user(s). Please reassign or remove these users before deleting the role.`
             );
         }
-
-        return await RoleModel.findByIdAndDelete(id);
+        return await RoleModel.findByIdAndUpdate(
+            id,
+            { deleted_at: new Date() },
+            { new: true }
+        );
     }
 
     /**

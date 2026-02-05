@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { RoleService } from '../services/role.service.js';
+import { AppError } from '../utils/errors.js';
 
 export class RoleController {
     constructor(private roleService: RoleService) { }
@@ -10,7 +11,8 @@ export class RoleController {
             const { updated_at, ...data } = role.toObject();
             res.status(201).json({ message: 'Role created', success: true, data });
         } catch (error: any) {
-            res.status(500).json({ message: error.message, success: false });
+            const statusCode = error.message.includes('already exists') ? 409 : 500;
+            res.status(statusCode).json({ message: error.message, success: false });
         }
     };
 
@@ -40,7 +42,13 @@ export class RoleController {
             await this.roleService.deleteRole(req.params.id as string);
             res.status(200).json({ message: 'Role deleted', success: true });
         } catch (error: any) {
-            res.status(500).json({ message: error.message, success: false });
+            let statusCode = 500;
+            if (error.message.includes('not found') || error.message.includes('already deleted')) {
+                statusCode = 404;
+            } else if (error.message.includes('assigned to')) {
+                statusCode = 400;
+            }
+            res.status(statusCode).json({ message: error.message, success: false });
         }
     };
 }
