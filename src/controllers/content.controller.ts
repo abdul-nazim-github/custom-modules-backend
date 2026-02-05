@@ -46,10 +46,15 @@ export class ContentController {
             const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
             const status = req.query.status ? parseInt(req.query.status as string) : undefined;
 
+            const search = req.query.search as string;
+            const sort = req.query.sort as string;
+
             const result = await this.contentService.listContent({
                 page,
                 limit,
-                status
+                status,
+                search,
+                sort
             });
 
             const from = (page - 1) * limit + 1;

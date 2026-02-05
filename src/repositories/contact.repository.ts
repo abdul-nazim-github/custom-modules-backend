@@ -5,14 +5,34 @@ export class ContactRepository {
         return await contact.save();
     }
 
-    async findAll(filters: { page: number; limit: number; status?: number }) {
+    async findAll(filters: {
+        page: number;
+        limit: number;
+        status?: number;
+        search?: string;
+        sort?: string;
+    }) {
         const query: any = {};
         if (filters.status !== undefined) {
             query.status = filters.status;
         }
+        if (filters.search) {
+            query.$or = [
+                { name: filters.search },
+                { email: filters.search }
+            ];
+        }
+
+        let sortObj: any = { created_at: -1 };
+        if (filters.sort) {
+            const [field, order] = filters.sort.split(':');
+            const fieldMap: any = { 'date': 'created_at', 'created_at': 'created_at', 'updated_at': 'updated_at' };
+            const sortField = fieldMap[field] || field;
+            sortObj = { [sortField]: order === 'desc' ? -1 : 1 };
+        }
 
         const items = await Contact.find(query)
-            .sort({ name: 1, created_at: -1 }) // Sort by name, then newest first
+            .sort(sortObj)
             .skip((filters.page - 1) * filters.limit)
             .limit(filters.limit);
 

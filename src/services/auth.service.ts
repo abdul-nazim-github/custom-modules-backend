@@ -108,7 +108,7 @@ export class AuthService {
                     id: user._id,
                     email: user.email,
                     name: user.name,
-                    role: user.role || ['user'],
+                    role: user.role || [Role.USER],
                     permissions: user.permissions || []
                 }
             }
@@ -205,12 +205,16 @@ export class AuthService {
     async listUsers(payload: {
         page?: number;
         limit?: number;
-        role?: string;
+        role?: string[];
+        search?: string;
+        sort?: string;
     }) {
         const { items, totalCount } = await this.userRepository.findAll({
             page: payload.page || 1,
             limit: payload.limit || 10,
-            role: payload.role as any
+            role: payload.role,
+            search: payload.search,
+            sort: payload.sort
         });
 
         return {
@@ -219,7 +223,7 @@ export class AuthService {
                 id: user._id,
                 email: user.email,
                 name: user.name,
-                role: user.role || ['user'],
+                role: user.role || [Role.USER],
                 permissions: user.permissions || [],
                 created_at: (user as any).created_at
             })),

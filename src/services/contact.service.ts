@@ -33,7 +33,7 @@ export class ContactService {
                 <p><strong>Message:</strong> ${contact.message}</p>
             `
         }).catch(err => logger.error(`Failed to send admin email: ${err.message}`));
-        console.log("Email sent to admin" , process.env.ADMIN_EMAIL );
+        console.log("Email sent to admin", process.env.ADMIN_EMAIL);
         sendEmail({
             to: contact.email,
             subject: 'Thank you for contacting us',
@@ -50,7 +50,13 @@ export class ContactService {
         };
     }
 
-    async listContacts(filters: { page: number; limit: number; status?: number }) {
+    async listContacts(filters: {
+        page: number;
+        limit: number;
+        status?: number;
+        search?: string;
+        sort?: string;
+    }) {
         const { items, totalCount } = await this.contactRepository.findAll(filters);
         return {
             message: 'Contacts retrieved successfully',

@@ -41,21 +41,38 @@ export class UserRepository {
     async findAll(filters: {
         page: number;
         limit: number;
-        role?: string;
+        role?: string[];
+        search?: string;
+        sort?: string;
     }) {
         const query: any = { deleted_at: null };
         if (filters.role) {
             query.role = filters.role;
         }
+        if (filters.search) {
+            query.$or = [
+                { name: filters.search },
+                { email: filters.search }
+            ];
+        }
 
         const skip = (filters.page - 1) * filters.limit;
+
+        // Parse sort parameter (e.g., "name:asc")
+        let sortObj: any = { created_at: -1 };
+        if (filters.sort) {
+            const [field, order] = filters.sort.split(':');
+            const fieldMap: any = { 'date': 'created_at', 'created_at': 'created_at', 'updated_at': 'updated_at' };
+            const sortField = fieldMap[field] || field;
+            sortObj = { [sortField]: order === 'desc' ? -1 : 1 };
+        }
 
         const [items, totalCount] = await Promise.all([
             UserModel.find(query)
                 .skip(skip)
                 .limit(filters.limit)
                 .select('-password')
-                .sort({ name: 1, created_at: -1 }) // Sort by name, then newest first
+                .sort(sortObj)
                 .exec(),
             UserModel.countDocuments(query)
         ]);

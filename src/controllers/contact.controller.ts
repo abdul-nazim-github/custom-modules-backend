@@ -35,8 +35,16 @@ export class ContactController {
             const page = req.query.page ? parseInt(req.query.page as string) : 1;
             const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
             const status = req.query.status ? parseInt(req.query.status as string) : undefined;
+            const search = req.query.search as string;
+            const sort = req.query.sort as string;
 
-            const result = await this.contactService.listContacts({ page, limit, status });
+            const result = await this.contactService.listContacts({
+                page,
+                limit,
+                status,
+                search,
+                sort
+            });
 
             const from = (page - 1) * limit + 1;
             const to = from + result.data.length - 1;
