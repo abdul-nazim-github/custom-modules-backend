@@ -49,7 +49,7 @@ export const protectContactListing = (
         });
       }
 
-      if (user.role === Role.SUPER_ADMIN) {
+      if (user.role && user.role.includes('super_admin')) {
         req.user = {
           id: user._id.toString(),
           role: user.role,

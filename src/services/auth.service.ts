@@ -27,7 +27,7 @@ export class AuthService {
         email: string;
         password: string;
         name?: string;
-        role?: Role;
+        role?: string;
         device: { ip: string; userAgent: string };
     }) {
         const existing = await this.userRepository.findByEmail(payload.email);
@@ -39,14 +39,14 @@ export class AuthService {
         }
         const hashedPassword = await bcrypt.hash(payload.password, 12);
 
-        const userRole = payload.role || Role.USER;
-        const defaultPermissions = RolePermissions[userRole] || [];
+        const userRole = payload.role || 'user';
+        const defaultPermissions = RolePermissions[userRole as Role] || [];
 
         const user = await this.userRepository.create({
             email: payload.email,
             password: hashedPassword,
             name: payload.name,
-            role: userRole,
+            role: [userRole],
             permissions: defaultPermissions
         });
 
@@ -108,7 +108,7 @@ export class AuthService {
                     id: user._id,
                     email: user.email,
                     name: user.name,
-                    role: user.role || Role.USER,
+                    role: user.role || ['user'],
                     permissions: user.permissions || []
                 }
             }
@@ -124,7 +124,7 @@ export class AuthService {
 
     async updateUserRole(payload: {
         userId: string;
-        newRole: Role;
+        newRole: string;
         updatedBy: string;
     }) {
         const updater = await this.userRepository.findById(payload.updatedBy as any);
@@ -132,20 +132,20 @@ export class AuthService {
             throw new Error('Unauthorized');
         }
 
-        const hasPermission = updater.role === Role.SUPER_ADMIN ||
+        const hasPermission = (updater.role && updater.role.includes('super_admin')) ||
             (updater.permissions && updater.permissions.includes(Permission.MANAGE_USERS));
 
         if (!hasPermission) {
-            throw new Error('Only SUPER_ADMIN or users with manage_users permission can update user roles');
+            throw new Error('Only super_admin or users with manage_users permission can update user roles');
         }
 
-        if (!Object.values(Role).includes(payload.newRole)) {
+        if (!Object.values(Role).includes(payload.newRole as any)) {
             throw new Error('Invalid role');
         }
 
-        const newDefaultPermissions = RolePermissions[payload.newRole] || [];
+        const newDefaultPermissions = RolePermissions[payload.newRole as Role] || [];
 
-        const user = await this.userRepository.updateRole(payload.userId, payload.newRole, newDefaultPermissions);
+        const user = await this.userRepository.updateRole(payload.userId, [payload.newRole], newDefaultPermissions);
         if (!user) {
             throw new Error('User not found');
         }
@@ -174,11 +174,11 @@ export class AuthService {
             throw new Error('Unauthorized');
         }
 
-        const hasPermission = updater.role === Role.SUPER_ADMIN ||
+        const hasPermission = (updater.role && updater.role.includes('super_admin')) ||
             (updater.permissions && updater.permissions.includes(Permission.MANAGE_PERMISSIONS));
 
         if (!hasPermission) {
-            throw new Error('Only SUPER_ADMIN or users with manage_permissions permission can update user permissions');
+            throw new Error('Only super_admin or users with manage_permissions permission can update user permissions');
         }
 
         const user = await this.userRepository.findById(payload.userId as any);
@@ -205,12 +205,12 @@ export class AuthService {
     async listUsers(payload: {
         page?: number;
         limit?: number;
-        role?: Role;
+        role?: string;
     }) {
         const { items, totalCount } = await this.userRepository.findAll({
             page: payload.page || 1,
             limit: payload.limit || 10,
-            role: payload.role
+            role: payload.role as any
         });
 
         return {
@@ -219,7 +219,7 @@ export class AuthService {
                 id: user._id,
                 email: user.email,
                 name: user.name,
-                role: user.role || Role.USER,
+                role: user.role || ['user'],
                 permissions: user.permissions || [],
                 created_at: (user as any).created_at
             })),
@@ -332,12 +332,12 @@ export class AuthService {
         }
 
         const hasPermission =
-            deleter.role === Role.SUPER_ADMIN ||
+            (deleter.role && deleter.role.includes('super_admin')) ||
             deleter.permissions?.includes(Permission.MANAGE_USERS);
 
         if (!hasPermission) {
             throw new Error(
-                'Only SUPER_ADMIN or users with MANAGE_USERS permission can delete users'
+                'Only super_admin or users with manage_users permission can delete users'
             );
         }
 
