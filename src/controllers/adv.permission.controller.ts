@@ -32,13 +32,32 @@ export class PermissionController {
         }
     };
 
-    list = async (_req: Request, res: Response) => {
+    list = async (req: Request, res: Response) => {
         try {
-            const permissions = await this.permissionService.list();
+            const page = req.query.page ? parseInt(req.query.page as string) : 1;
+            const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+            const search = req.query.search as string;
+            const sort = req.query.sort as string;
+
+            const { items, totalCount } = await this.permissionService.list({
+                page,
+                limit,
+                search,
+                sort
+            });
+
+            const from = (page - 1) * limit + 1;
+            const to = from + items.length - 1;
+
             res.status(200).json({
                 message: 'Permissions fetched successfully',
                 success: true,
-                data: permissions
+                data: items,
+                meta: {
+                    totalCount,
+                    from: items.length > 0 ? from : 0,
+                    to: items.length > 0 ? to : 0
+                }
             });
         } catch (error: any) {
             res.status(500).json({

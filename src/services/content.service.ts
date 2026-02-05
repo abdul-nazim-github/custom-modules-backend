@@ -49,11 +49,15 @@ export class ContentService {
         page?: number;
         limit?: number;
         status?: number;
+        search?: string;
+        sort?: string;
     }) {
         const { items, totalCount } = await this.contentRepository.findAll({
             page: filters.page || 1,
             limit: filters.limit || 10,
-            status: filters.status
+            status: filters.status,
+            search: filters.search,
+            sort: filters.sort
         });
         return {
             message: 'Content list retrieved successfully',

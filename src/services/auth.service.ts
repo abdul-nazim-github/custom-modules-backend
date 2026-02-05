@@ -206,11 +206,15 @@ export class AuthService {
         page?: number;
         limit?: number;
         role?: string[];
+        search?: string;
+        sort?: string;
     }) {
         const { items, totalCount } = await this.userRepository.findAll({
             page: payload.page || 1,
             limit: payload.limit || 10,
-            role: payload.role
+            role: payload.role,
+            search: payload.search,
+            sort: payload.sort
         });
 
         return {

@@ -153,11 +153,15 @@ export class AuthController {
         try {
             const page = req.query.page ? parseInt(req.query.page as string) : 1;
             const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
-            const role = req.query.role as Role;
+            const role = req.query.role as string;
+            const search = req.query.search as string;
+            const sort = req.query.sort as string;
             const result = await this.authService.listUsers({
                 page,
                 limit,
-                role
+                role: role ? [role] : undefined,
+                search,
+                sort
             });
             const from = (page - 1) * limit + 1;
             const to = from + result.data.length - 1;

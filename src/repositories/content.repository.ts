@@ -14,20 +14,33 @@ export class ContentRepository {
         page: number;
         limit: number;
         status?: number;
+        search?: string;
+        sort?: string;
     }) {
         const query: any = {};
         if (filters.status !== undefined) {
             query.status = filters.status;
         }
+        if (filters.search) {
+            query.title = filters.search;
+        }
         query.deleted_at = { $exists: false };
 
         const skip = (filters.page - 1) * filters.limit;
+
+        let sortObj: any = { created_at: -1 };
+        if (filters.sort) {
+            const [field, order] = filters.sort.split(':');
+            const fieldMap: any = { 'date': 'created_at', 'created_at': 'created_at', 'updated_at': 'updated_at' };
+            const sortField = fieldMap[field] || field;
+            sortObj = { [sortField]: order === 'desc' ? -1 : 1 };
+        }
 
         const [items, totalCount] = await Promise.all([
             ContentModel.find(query)
                 .skip(skip)
                 .limit(filters.limit)
-                .sort({ title: 1, created_at: -1 }) // Sort by title, then newest first
+                .sort(sortObj)
                 .exec(),
             ContentModel.countDocuments(query)
         ]);
