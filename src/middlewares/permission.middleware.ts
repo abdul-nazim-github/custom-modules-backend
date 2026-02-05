@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { Role, RolePermissions } from '../config/roles.js';
 
 export const permissionMiddleware = (requiredPermission: string) => {
     return (req: Request, res: Response, next: NextFunction) => {
@@ -11,7 +10,8 @@ export const permissionMiddleware = (requiredPermission: string) => {
                 success: false
             });
         }
-        if (user.role === Role.SUPER_ADMIN || user.role === 'super_admin') {
+        // Check if user has super_admin role
+        if (user.role && user.role.includes('super_admin')) {
             return next();
         }
         const userPermissions = user.permissions || [];
