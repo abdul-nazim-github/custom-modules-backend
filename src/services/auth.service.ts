@@ -46,7 +46,7 @@ export class AuthService {
             email: payload.email,
             password: hashedPassword,
             name: payload.name,
-            role: userRole,
+            role: [userRole],
             permissions: defaultPermissions
         });
 
@@ -108,7 +108,7 @@ export class AuthService {
                     id: user._id,
                     email: user.email,
                     name: user.name,
-                    role: user.role || Role.USER,
+                    role: user.role || [Role.USER],
                     permissions: user.permissions || []
                 }
             }
@@ -132,7 +132,7 @@ export class AuthService {
             throw new Error('Unauthorized');
         }
 
-        const hasPermission = updater.role === Role.SUPER_ADMIN ||
+        const hasPermission = (updater.role && updater.role.includes('super_admin')) ||
             (updater.permissions && updater.permissions.includes(Permission.MANAGE_USERS));
 
         if (!hasPermission) {
@@ -145,7 +145,7 @@ export class AuthService {
 
         const newDefaultPermissions = RolePermissions[payload.newRole] || [];
 
-        const user = await this.userRepository.updateRole(payload.userId, payload.newRole, newDefaultPermissions);
+        const user = await this.userRepository.updateRole(payload.userId, [payload.newRole], newDefaultPermissions);
         if (!user) {
             throw new Error('User not found');
         }
@@ -174,7 +174,7 @@ export class AuthService {
             throw new Error('Unauthorized');
         }
 
-        const hasPermission = updater.role === Role.SUPER_ADMIN ||
+        const hasPermission = (updater.role && updater.role.includes('super_admin')) ||
             (updater.permissions && updater.permissions.includes(Permission.MANAGE_PERMISSIONS));
 
         if (!hasPermission) {
@@ -205,7 +205,7 @@ export class AuthService {
     async listUsers(payload: {
         page?: number;
         limit?: number;
-        role?: Role;
+        role?: string[];
     }) {
         const { items, totalCount } = await this.userRepository.findAll({
             page: payload.page || 1,
@@ -219,7 +219,7 @@ export class AuthService {
                 id: user._id,
                 email: user.email,
                 name: user.name,
-                role: user.role || Role.USER,
+                role: user.role || [Role.USER],
                 permissions: user.permissions || [],
                 created_at: (user as any).created_at
             })),
@@ -332,7 +332,7 @@ export class AuthService {
         }
 
         const hasPermission =
-            deleter.role === Role.SUPER_ADMIN ||
+            (deleter.role && deleter.role.includes('super_admin')) ||
             deleter.permissions?.includes(Permission.MANAGE_USERS);
 
         if (!hasPermission) {
