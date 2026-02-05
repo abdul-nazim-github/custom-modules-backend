@@ -95,7 +95,6 @@ export class PermissionService {
                 email: obj.user.email
             };
         }
-
         delete obj.userId;
         delete obj.user;
 
