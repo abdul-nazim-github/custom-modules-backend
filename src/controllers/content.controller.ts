@@ -47,7 +47,15 @@ export class ContentController {
             const status = req.query.status ? parseInt(req.query.status as string) : undefined;
 
             const search = req.query.search as string;
-            const sort = req.query.sort as string;
+
+            // Handle both unified 'sort' and legacy 'sortBy'/'order'
+            let sort = req.query.sort as string;
+            const sortBy = req.query.sortBy as string;
+            const order = req.query.order as string;
+
+            if (!sort && sortBy) {
+                sort = `${sortBy}:${order || 'asc'}`;
+            }
 
             const result = await this.contentService.listContent({
                 page,
