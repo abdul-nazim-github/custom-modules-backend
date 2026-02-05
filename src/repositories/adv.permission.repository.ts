@@ -30,8 +30,8 @@ export class PermissionRepository {
         const match: any = {};
         if (filters.search) {
             match.$or = [
-                { 'user.name': filters.search },
-                { 'user.email': filters.search }
+                { 'user.name': { $regex: filters.search, $options: 'i' } },
+                { 'user.email': { $regex: filters.search, $options: 'i' } }
             ];
         }
 

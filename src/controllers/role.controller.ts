@@ -16,10 +16,40 @@ export class RoleController {
         }
     };
 
-    list = async (_req: Request, res: Response) => {
+    list = async (req: Request, res: Response) => {
         try {
-            const roles = await this.roleService.listRoles();
-            res.status(200).json({ success: true, data: roles });
+            const page = req.query.page ? parseInt(req.query.page as string) : 1;
+            const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+            const search = req.query.search as string;
+
+            // Handle both unified 'sort' and legacy 'sortBy'/'order'
+            let sort = req.query.sort as string;
+            const sortBy = req.query.sortBy as string;
+            const order = req.query.order as string;
+
+            if (!sort && sortBy) {
+                sort = `${sortBy}:${order || 'asc'}`;
+            }
+
+            const { items, totalCount } = await this.roleService.listRoles({
+                page,
+                limit,
+                search,
+                sort
+            });
+
+            const from = (page - 1) * limit + 1;
+            const to = from + items.length - 1;
+
+            res.status(200).json({
+                success: true,
+                data: items,
+                meta: {
+                    totalCount,
+                    from: items.length > 0 ? from : 0,
+                    to: items.length > 0 ? to : 0
+                }
+            });
         } catch (error: any) {
             res.status(500).json({ message: error.message, success: false });
         }

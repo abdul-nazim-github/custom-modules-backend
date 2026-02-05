@@ -17,8 +17,33 @@ export class RoleService {
         return await RoleModel.create(data);
     }
 
-    async listRoles() {
-        return await RoleModel.find({ deleted_at: null }).sort({ name: 1 });
+    async listRoles(filters: {
+        page: number;
+        limit: number;
+        search?: string;
+        sort?: string;
+    }) {
+        const query: any = { deleted_at: null };
+        if (filters.search) {
+            query.name = { $regex: filters.search, $options: 'i' };
+        }
+
+        let sortObj: any = { name: 1 };
+        if (filters.sort) {
+            const [field, order] = filters.sort.split(':');
+            const fieldMap: any = { 'date': 'created_at', 'created_at': 'created_at', 'updated_at': 'updated_at' };
+            const sortField = fieldMap[field] || field;
+            sortObj = { [sortField]: order === 'desc' ? -1 : 1 };
+        }
+
+        const skip = (filters.page - 1) * filters.limit;
+
+        const [items, totalCount] = await Promise.all([
+            RoleModel.find(query).sort(sortObj).skip(skip).limit(filters.limit),
+            RoleModel.countDocuments(query)
+        ]);
+
+        return { items, totalCount };
     }
 
     async getByName(name: string) {

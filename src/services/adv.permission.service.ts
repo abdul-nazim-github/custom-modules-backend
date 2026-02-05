@@ -11,7 +11,7 @@ export class PermissionService {
         this.permissionRepository = permissionRepository;
     }
 
-    async create(data: CreateRoleDto): Promise<IPermission> {
+    async create(data: CreateRoleDto): Promise<any> {
         const config = await ConfigModel.findOne({ slug: 'adv-permission-defaults' });
         console.log('Default permission config:', config);
         const defaultPerms = config ? config.permissions : [];
@@ -74,15 +74,30 @@ export class PermissionService {
         return permission ? this.formatPermissionResponse(permission) : null;
     }
 
-    private formatPermissionResponse(p: IPermission) {
+    private formatPermissionResponse(p: any) {
         const obj = p.toObject ? p.toObject() : p;
-        const user = obj.userId && typeof obj.userId === 'object' ? {
-            id: obj.userId._id,
-            name: obj.userId.name,
-            email: obj.userId.email
-        } : null;
 
+        let user = null;
+
+        // Case 1: Populated by Mongoose (userId is the user object)
+        if (obj.userId && typeof obj.userId === 'object' && (obj.userId.name || obj.userId.email)) {
+            user = {
+                id: obj.userId._id,
+                name: obj.userId.name,
+                email: obj.userId.email
+            };
+        }
+        // Case 2: From Aggregation (user object exists separately)
+        else if (obj.user && typeof obj.user === 'object' && (obj.user.name || obj.user.email)) {
+            user = {
+                id: obj.user._id,
+                name: obj.user.name,
+                email: obj.user.email
+            };
+        }
         delete obj.userId;
+        delete obj.user;
+
         return {
             ...obj,
             user
