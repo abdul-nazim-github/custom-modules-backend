@@ -14,7 +14,6 @@ export enum Permission {
     CONTACT_FORM = 'modules~permission~contact_form'
 }
 
-
 export const RolePermissions: Record<Role, Permission[]> = {
     [Role.SUPER_ADMIN]: [
         Permission.PROFILE,
