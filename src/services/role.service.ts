@@ -1,6 +1,7 @@
 import { RoleModel } from '../models/role.user.model.js';
 import { RoleUserDto, UpdateRoleUserDto } from '../dtos/role.user.dto.js';
 import { PermissionService } from './adv.permission.service.js';
+import { UserModel } from '../models/user.model.js';
 
 export class RoleService {
     constructor(private permissionService: PermissionService) { }
@@ -32,6 +33,24 @@ export class RoleService {
     }
 
     async deleteRole(id: string) {
+        // First, get the role to check its name
+        const role = await RoleModel.findById(id);
+        if (!role) {
+            throw new Error('Role not found');
+        }
+
+        // Check if any users have this role assigned
+        const usersWithRole = await UserModel.countDocuments({
+            role: role.name,
+            deleted_at: null
+        });
+
+        if (usersWithRole > 0) {
+            throw new Error(
+                `Cannot delete role '${role.name}' because it is assigned to ${usersWithRole} user(s). Please reassign or remove these users before deleting the role.`
+            );
+        }
+
         return await RoleModel.findByIdAndDelete(id);
     }
 
