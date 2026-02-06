@@ -22,6 +22,11 @@ import { RoleController } from './controllers/role.controller.js';
 import { createRoleRoutes } from './routes/role.routes.js';
 import { UserController } from './controllers/user.controller.js';
 import { createUserRoutes } from './routes/user.routes.js';
+import { PermissionRepository } from './repositories/adv.permission.repository.js';
+import { PermissionService } from './services/adv.permission.service.js';
+import { PermissionController } from './controllers/adv.permission.controller.js';
+import { createAdvPermissionRoutes } from './routes/adv.permission.routes.js';
+
 export class AuthModule {
     private config: AuthConfig;
     public router: Router;
@@ -44,6 +49,15 @@ export class AuthModule {
         const contentController = new ContentController(contentService);
         this.router.use('/content', createContentRoutes(contentController, this.config.jwt.accessSecret, sessionRepository, userRepository));
 
+        const permissionRepository = new PermissionRepository();
+        const permissionService = new PermissionService(permissionRepository);
+        const permissionController = new PermissionController(permissionService);
+        this.router.use('/permissions', createAdvPermissionRoutes(
+            permissionController,
+            this.config.jwt.accessSecret,
+            sessionRepository,
+            userRepository
+        ));
 
         const resetPasswordService = new ResetPasswordService(userRepository);
         const resetPasswordController = new ResetPasswordController(resetPasswordService);
