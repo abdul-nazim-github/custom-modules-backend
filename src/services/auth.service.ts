@@ -30,7 +30,6 @@ export class AuthService {
             throw new Error('User already exists');
         }
         const hashedPassword = await bcrypt.hash(payload.password, 12);
-
         const userRole = payload.role || Role.USER;
         const defaultPermissions = RolePermissions[userRole] || [];
 
