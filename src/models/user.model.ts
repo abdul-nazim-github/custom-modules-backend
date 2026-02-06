@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, IsOptional, MinLength, Matches } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, IsOptional, MinLength, Matches, IsArray } from 'class-validator';
 import { Schema, model, Document } from 'mongoose';
 
 export class User {
@@ -6,12 +6,11 @@ export class User {
     @IsNotEmpty()
     email!: string;
 
-
     @IsString()
     @IsNotEmpty()
     @MinLength(8, { message: 'Password must be at least 8 characters long' })
     @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
-        message: 'Password is too weak. It must contain at least one uppercase letter, one number or special character.',
+        message: 'Password is too weak. It must contain at least one uppercase letter, one lower case letter, one number and one special character.',
     })
     password!: string;
 
@@ -25,6 +24,17 @@ export class User {
 
     @IsOptional()
     metadata?: Record<string, any>;
+
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    role?: string[];
+
+    @IsOptional()
+    permissions?: string[];
+
+    @IsOptional()
+    resetTokenUsedAt?: Date;
 }
 
 const UserSchema = new Schema({
@@ -32,7 +42,10 @@ const UserSchema = new Schema({
     password: { type: String, required: true },
     name: { type: String, required: true },
     metadata: { type: Schema.Types.Mixed, default: {} },
-    deleted_at: { type: Date, default: null }
+    role: { type: [String], default: ['user'] },
+    permissions: { type: [String], default: [] },
+    deleted_at: { type: Date, default: null },
+    resetTokenUsedAt: { type: Date }
 }, {
     timestamps: {
         createdAt: 'created_at',

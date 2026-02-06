@@ -14,7 +14,6 @@ export class AuthModule {
         this.router = Router();
         this.initialize();
     }
-
     private initialize() {
         const userRepository = new UserRepository();
         const authService = new AuthService(this.config, userRepository);
