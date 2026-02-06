@@ -140,8 +140,6 @@ export class RoleService {
                 finalPermissions.add(`${modulePath}.view`);
             }
         }
-
-        const sorted = Array.from(finalPermissions).sort((a, b) => b.length - a.length);
         const result = new Set<string>();
 
         const finalArray = Array.from(finalPermissions);
