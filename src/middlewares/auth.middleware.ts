@@ -3,14 +3,13 @@ import jwt from 'jsonwebtoken';
 
 import { SessionRepository } from '../repositories/session.repository.js';
 import { UserRepository } from '../repositories/user.repository.js';
-import { Role, RolePermissions } from '../config/roles.js';
 
 declare global {
   namespace Express {
     interface Request {
       user?: {
         id: string;
-        role: string;
+        role: string[];
         permissions: string[];
       };
       sessionId?: string;
@@ -40,9 +39,14 @@ export const authMiddleware = (
 
       if (decoded.sessionId) {
         const session = await sessionRepository.findById(decoded.sessionId);
-        if (!session || !session.isActive) {
+        const isExpired = session && new Date() > session.expiresAt;
+
+        if (!session || !session.isActive || isExpired) {
+          if (session && session.isActive && isExpired) {
+            await sessionRepository.deactivateById(session._id.toString());
+          }
           return res.status(401).json({
-            message: 'Session is no longer active',
+            message: 'Session is no longer active or has expired',
             success: false
           });
         }
@@ -56,6 +60,8 @@ export const authMiddleware = (
       }
 
       const user = await userRepository.findById(decoded.userId);
+      console.log('Decoded User ID:', decoded.userId);
+      console.log('User from DB:', user);
       if (!user) {
         return res.status(401).json({
           message: 'User not found',
@@ -63,7 +69,7 @@ export const authMiddleware = (
         });
       }
 
-      const userRole = (user.role as Role) || Role.USER;
+      const userRole = user.role || ['user'];
       req.user = {
         id: decoded.userId,
         role: userRole,

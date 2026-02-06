@@ -1,9 +1,12 @@
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { Types } from 'mongoose';
 import { AuthConfig } from '../config/types.js';
 import { UserRepository } from '../repositories/user.repository.js';
 import { SessionService } from './session.service.js';
 import { logger } from '../utils/logger.js';
-import { Role, RolePermissions } from '../config/roles.js'; 
-import { Permission } from '../config/roles.js';
+import { Role, RolePermissions, Permission } from '../config/roles.js';
+
 export class AuthService {
     private config: AuthConfig;
     private userRepository: UserRepository;
@@ -19,6 +22,65 @@ export class AuthService {
         this.sessionService = sessionService;
     }
 
+    async login(payload: {
+        email: string;
+        password: string;
+        device: { ip: string; userAgent: string };
+    }) {
+        const user = await this.userRepository.findByEmail(payload.email);
+        if (!user || user.deleted_at) {
+            logger.warn(`Failed login attempt: User not found or deleted for email ${payload.email}`);
+            throw new Error('Invalid credentials');
+        }
+
+        if (!user.password) {
+            logger.warn(`Failed login attempt: User ${payload.email} has no password set`);
+            throw new Error('Invalid credentials');
+        }
+
+        const isValid = await bcrypt.compare(payload.password, user.password);
+        if (!isValid) {
+            logger.warn(`Failed login attempt: Incorrect password for user ${payload.email}`);
+            throw new Error('Invalid credentials');
+        }
+
+        // Deactivate all existing sessions for this user before creating a new one
+        await this.sessionService.deactivateAllForUser(user._id.toString());
+
+        const { session, refreshToken } = await this.sessionService.createSession(
+            user._id as Types.ObjectId,
+            payload.device
+        );
+
+        const accessToken = jwt.sign(
+            { userId: user._id, sessionId: session._id },
+            this.config.jwt.accessSecret,
+            { expiresIn: this.config.jwt.accessTTL as any }
+        );
+
+        return {
+            message: 'Login successful',
+            data: {
+                accessToken,
+                refreshToken,
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role || [Role.USER],
+                    permissions: user.permissions || []
+                }
+            }
+        };
+    }
+
+    async logout(payload: { sessionId: string }) {
+        await this.sessionService.deactivateSession(payload.sessionId);
+        return {
+            message: 'Logged out successfully'
+        };
+    }
+
     async updateUserRole(payload: {
         userId: string;
         newRole: Role;
@@ -29,7 +91,7 @@ export class AuthService {
             throw new Error('Unauthorized');
         }
 
-        const hasPermission = updater.role === Role.SUPER_ADMIN ||
+        const hasPermission = (updater.role && updater.role.includes('super_admin')) ||
             (updater.permissions && updater.permissions.includes(Permission.MANAGE_USERS));
 
         if (!hasPermission) {
@@ -42,7 +104,7 @@ export class AuthService {
 
         const newDefaultPermissions = RolePermissions[payload.newRole] || [];
 
-        const user = await this.userRepository.updateRole(payload.userId, payload.newRole, newDefaultPermissions);
+        const user = await this.userRepository.updateRole(payload.userId, [payload.newRole], newDefaultPermissions);
         if (!user) {
             throw new Error('User not found');
         }
@@ -71,7 +133,7 @@ export class AuthService {
             throw new Error('Unauthorized');
         }
 
-        const hasPermission = updater.role === Role.SUPER_ADMIN ||
+        const hasPermission = (updater.role && updater.role.includes('super_admin')) ||
             (updater.permissions && updater.permissions.includes(Permission.MANAGE_PERMISSIONS));
 
         if (!hasPermission) {
@@ -88,9 +150,6 @@ export class AuthService {
         if (!updatedUser) {
             throw new Error('Failed to update user permissions');
         }
-
-        logger.info(`User ${payload.userId} permissions updated by ${payload.updatedBy}`);
-
         return {
             message: 'User permissions updated successfully',
             data: {
@@ -105,25 +164,31 @@ export class AuthService {
     async listUsers(payload: {
         page?: number;
         limit?: number;
-        role?: Role;
+        role?: string[];
+        search?: string;
+        sort?: string;
     }) {
-        const users = await this.userRepository.findAll({
+        const { items, totalCount } = await this.userRepository.findAll({
             page: payload.page || 1,
             limit: payload.limit || 10,
-            role: payload.role
+            role: payload.role,
+            search: payload.search,
+            sort: payload.sort
         });
         return {
             message: 'Users retrieved successfully',
-            data: users.map(user => ({
+            data: items.map(user => ({
                 id: user._id,
                 email: user.email,
                 name: user.name,
-                role: user.role || Role.USER,
+                role: user.role || [Role.USER],
                 permissions: user.permissions || [],
                 created_at: (user as any).created_at
-            }))
+            })),
+            totalCount
         };
     }
+
     async deleteUser(payload: { userId: string; deletedBy: string }) {
         const deleter = await this.userRepository.findById(payload.deletedBy as any);
         if (!deleter) {
@@ -131,7 +196,7 @@ export class AuthService {
         }
 
         const hasPermission =
-            deleter.role === Role.SUPER_ADMIN ||
+            (deleter.role && deleter.role.includes('super_admin')) ||
             deleter.permissions?.includes(Permission.MANAGE_USERS);
 
         if (!hasPermission) {

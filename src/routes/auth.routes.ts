@@ -11,53 +11,56 @@ export const createAuthRoutes = (
     sessionRepository: SessionRepository,
     userRepository: UserRepository
 ): Router => {
-    const router = Router();
+    const auth = authMiddleware(accessSecret, sessionRepository, userRepository);
+
+    router.post('/login', authController.login);
+    router.post('/logout', auth, authController.logout);
 
     //  protected routes
     router.get('/profile',
-        authMiddleware(accessSecret, sessionRepository, userRepository),
+        auth,
         permissionMiddleware(Permission.PROFILE),
         (req, res) => res.json({ message: 'Welcome to Profile', success: true })
     );
 
     router.get('/settings',
-        authMiddleware(accessSecret, sessionRepository, userRepository),
+        auth,
         permissionMiddleware(Permission.SETTINGS),
         (req, res) => res.json({ message: 'Welcome to Settings', success: true })
     );
 
     router.get('/activity',
-        authMiddleware(accessSecret, sessionRepository, userRepository),
+        auth,
         permissionMiddleware(Permission.ACTIVITY),
         (req, res) => res.json({ message: 'Welcome to Activity', success: true })
     );
 
     router.get('/security',
-        authMiddleware(accessSecret, sessionRepository, userRepository),
+        auth,
         permissionMiddleware(Permission.SECURITY),
         (req, res) => res.json({ message: 'Welcome to Security', success: true })
     );
 
     router.get('/users',
-        authMiddleware(accessSecret, sessionRepository, userRepository),
+        auth,
         permissionMiddleware(Permission.MANAGE_USERS),
         authController.listUsers
     );
 
     router.put('/users/:userId/role',
-        authMiddleware(accessSecret, sessionRepository, userRepository),
+        auth,
         permissionMiddleware(Permission.MANAGE_USERS),
         authController.updateUserRole
     );
 
     router.put('/users/:userId/permissions',
-        authMiddleware(accessSecret, sessionRepository, userRepository),
+        auth,
         permissionMiddleware(Permission.MANAGE_PERMISSIONS),
         authController.updateUserPermissions
     );
 
     router.delete('/users/:userId',
-        authMiddleware(accessSecret, sessionRepository, userRepository),
+        auth,
         permissionMiddleware(Permission.MANAGE_USERS),
         authController.deleteUser
     );

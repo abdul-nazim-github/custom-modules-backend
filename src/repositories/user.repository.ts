@@ -8,11 +8,21 @@ export class UserRepository {
     }
 
     async findById(userId: Types.ObjectId) {
-        return UserModel.findById(userId);
+        return UserModel.findOne({ _id: userId, deleted_at: null });
     }
 
+    async create(data: {
+        email: string;
+        password?: string;
+        name?: string;
+        role?: string[];
+        permissions?: string[];
+        metadata?: Record<string, any>;
+    }) {
+        return UserModel.create(data);
+    }
 
-    async updateRole(userId: string, role: string, permissions: string[]) {
+    async updateRole(userId: string, role: string[], permissions: string[]) {
         return UserModel.findByIdAndUpdate(
             userId,
             { role, permissions },
@@ -31,23 +41,52 @@ export class UserRepository {
     async findAll(filters: {
         page: number;
         limit: number;
-        role?: string;
+        role?: string[];
+        search?: string;
+        sort?: string;
     }) {
-        const query: any = {};
+        const query: any = { deleted_at: null };
         if (filters.role) {
-            query.role = filters.role;
+            query.role = { $in: filters.role };
+        }
+        if (filters.search) {
+            query.$or = [
+                { name: { $regex: filters.search, $options: 'i' } },
+                { email: { $regex: filters.search, $options: 'i' } }
+            ];
         }
 
         const skip = (filters.page - 1) * filters.limit;
 
-        return UserModel.find(query)
-            .skip(skip)
-            .limit(filters.limit)
-            .select('-password')
-            .exec();
+        // Parse sort parameter (e.g., "name:asc")
+        let sortObj: any = { created_at: -1 };
+        if (filters.sort) {
+            const [field, order] = filters.sort.split(':');
+            const fieldMap: any = { 'date': 'created_at', 'created_at': 'created_at', 'updated_at': 'updated_at' };
+            const sortField = fieldMap[field] || field;
+            sortObj = { [sortField]: order === 'desc' ? -1 : 1 };
+        }
+
+        const [items, totalCount] = await Promise.all([
+            UserModel.find(query)
+                .skip(skip)
+                .limit(filters.limit)
+                .select('-password')
+                .sort(sortObj)
+                .exec(),
+            UserModel.countDocuments(query)
+        ]);
+
+        return { items, totalCount };
     }
 
     async delete(userId: string) {
-        return UserModel.findByIdAndDelete(userId);
+        return UserModel.findByIdAndUpdate(
+            userId,
+            {
+                deleted_at: new Date()
+            },
+            { new: true }
+        );
     }
 }
