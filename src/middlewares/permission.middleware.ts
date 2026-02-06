@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { Role, RolePermissions } from '../config/roles.js';
 
 export const permissionMiddleware = (requiredPermission: string) => {
     return (req: Request, res: Response, next: NextFunction) => {
@@ -11,9 +10,8 @@ export const permissionMiddleware = (requiredPermission: string) => {
                 success: false
             });
         }
-
-        // SUPER_ADMIN has all permissions
-        if (user.role === Role.SUPER_ADMIN) {
+        // Check if user has super_admin role
+        if (user.role && user.role.includes('super_admin')) {
             return next();
         }
         const userPermissions = user.permissions || [];
@@ -26,10 +24,9 @@ export const permissionMiddleware = (requiredPermission: string) => {
             }
             return false;
         });
-
         if (!hasPermission) {
             return res.status(403).json({
-                message: 'Forbidden: You do not have the required permission',
+                message: `Forbidden: You do not have the required permission (${requiredPermission})`,
                 success: false
             });
         }

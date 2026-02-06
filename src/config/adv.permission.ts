@@ -1,8 +1,4 @@
 export const MODULES = {
-    PROFILE: {
-        key: 'profile',
-        submodules: {}
-    },
     SETTINGS: {
         key: 'settings',
         submodules: {}
@@ -25,6 +21,7 @@ export const MODULES = {
         }
     }
 } as const;
+
 
 export const ACTIONS = {
     VIEW: 'view',
