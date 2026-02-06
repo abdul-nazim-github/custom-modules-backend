@@ -11,7 +11,6 @@ export class SessionService {
         this.sessionRepository = sessionRepository;
         this.config = config;
     }
-
     async createSession(userId: Types.ObjectId, device: { ip: string; userAgent: string }) {
         const refreshToken = crypto.randomBytes(64).toString('hex');
         const refreshTokenHash = crypto
@@ -32,6 +31,10 @@ export class SessionService {
 
     async deactivateSession(sessionId: string) {
         await this.sessionRepository.deactivateById(sessionId);
+    }
+
+    async deactivateAllForUser(userId: string) {
+        await this.sessionRepository.deactivateAllForUser(userId);
     }
 
     async validateSession(sessionId: string) {

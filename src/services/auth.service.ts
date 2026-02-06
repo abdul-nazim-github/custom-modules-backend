@@ -5,6 +5,7 @@ import { AuthConfig } from '../config/types.js';
 import { UserRepository } from '../repositories/user.repository.js';
 import { SessionService } from './session.service.js';
 import { logger } from '../utils/logger.js';
+import { Role, RolePermissions } from '../config/roles.js';
 
 export class AuthService {
     private config: AuthConfig;
@@ -43,6 +44,9 @@ export class AuthService {
             throw new Error('Invalid credentials');
         }
 
+        // Deactivate all existing sessions for this user before creating a new one
+        await this.sessionService.deactivateAllForUser(user._id.toString());
+
         const { session, refreshToken } = await this.sessionService.createSession(
             user._id as Types.ObjectId,
             payload.device
@@ -62,7 +66,9 @@ export class AuthService {
                 user: {
                     id: user._id,
                     email: user.email,
-                    name: user.name
+                    name: user.name,
+                    role: user.role || [Role.USER],
+                    permissions: user.permissions || []
                 }
             }
         };

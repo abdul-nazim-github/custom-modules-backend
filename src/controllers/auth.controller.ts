@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import type { AuthService } from '../services/auth.service.js';
-
+import { Role } from '../config/roles.js';
 export class AuthController {
     private authService: AuthService;
 
@@ -30,7 +30,7 @@ export class AuthController {
                 userAgent: req.headers['user-agent'] || 'unknown'
             };
             const result = await this.authService.login({ email, password, device });
-            res.json({
+            return res.json({
                 message: result.message,
                 data: result.data,
                 success: true
@@ -56,15 +56,16 @@ export class AuthController {
                 sessionId: req.sessionId
             });
 
-            res.json({
-                message: 'Logged out successfully',
-                success: true
-            });
-        } catch (error: any) {
-            res.status(401).json({
-                message: error.message,
-                success: false
-            });
-        }
-    };
+    res.json({
+      message: 'Logged out successfully',
+      success: true
+    });
+  } catch (error: any) {
+    res.status(401).json({
+      message: error.message,
+      success: false
+    });
+  }
+}
+
 }
