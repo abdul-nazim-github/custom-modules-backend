@@ -303,4 +303,27 @@ export class AuthController {
         }
     };
 
+
+    public editProfile = async (req: Request, res: Response) => {
+        try {
+            const { name } = req.body;
+            const userId = req.user?.id; // Extracted from authMiddleware
+
+            if (!userId) {
+                return res.status(401).json({ message: 'Unauthorized', success: false });
+            }
+
+            const result = await this.authService.updateProfile(userId, { name });
+            res.status(200).json({
+                ...result,
+                success: true
+            });
+        } catch (error: any) {
+            res.status(400).json({
+                message: error.message,
+                success: false
+            });
+        }
+    };
+    
 }

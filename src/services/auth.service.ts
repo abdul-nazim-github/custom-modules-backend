@@ -356,4 +356,24 @@ export class AuthService {
         };
     }
 
+    async updateProfile(userId: string, data: { name: string }) {
+        const user = await this.userRepository.findById(userId as any);
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        user.name = data.name;
+        await (user as any).save();
+
+        return {
+            message: 'Profile updated successfully',
+            data: {
+                id: user._id,
+                name: user.name,
+                email: user.email
+            }
+        };
+    }
+
+
 }
