@@ -54,17 +54,6 @@ export const createAuthRoutes = (
         authController.listUsers
     );
 
-    router.put('/users/:userId/role',
-        authMiddleware(accessSecret, sessionRepository, userRepository),
-        permissionMiddleware(Permission.MANAGE_USERS),
-        authController.updateUserRole
-    );
-
-    router.put('/users/:userId/permissions',
-        authMiddleware(accessSecret, sessionRepository, userRepository),
-        permissionMiddleware(Permission.MANAGE_PERMISSIONS),
-        authController.updateUserPermissions
-    );
 
     router.delete('/users/:userId',
         authMiddleware(accessSecret, sessionRepository, userRepository),

@@ -1,10 +1,10 @@
 import { RoleModel } from '../models/role.user.model.js';
 import { RoleUserDto, UpdateRoleUserDto } from '../dtos/role.user.dto.js';
-import { PermissionService } from './adv.permission.service.js';
 import { UserModel } from '../models/user.model.js';
+import { ACTIONS, isValidModulePath } from '../config/roles.js';
 
 export class RoleService {
-    constructor(private permissionService: PermissionService) { }
+    constructor() { }
 
     async createRole(data: RoleUserDto) {
         const existing = await this.getByName(data.name);
@@ -12,7 +12,7 @@ export class RoleService {
             throw new Error(`Role '${data.name}' already exists`);
         }
         if (data.permissions) {
-            data.permissions = this.permissionService.normalizePermissions(data.permissions);
+            data.permissions = this.normalizePermissions(data.permissions);
         }
         return await RoleModel.create(data);
     }
@@ -52,7 +52,7 @@ export class RoleService {
 
     async updateRole(id: string, data: UpdateRoleUserDto) {
         if (data.permissions) {
-            data.permissions = this.permissionService.normalizePermissions(data.permissions);
+            data.permissions = this.normalizePermissions(data.permissions);
         }
         return await RoleModel.findByIdAndUpdate(id, data, { new: true });
     }
@@ -98,6 +98,60 @@ export class RoleService {
         }
 
         const combined = [...new Set([...basePermissions, ...custom])];
-        return this.permissionService.normalizePermissions(combined);
+        return this.normalizePermissions(combined);
+    }
+
+    /**
+     * Checks if a permission is covered by another permission (redundant)
+     */
+    private isCoveredBy(child: string, parent: string): boolean {
+        if (parent === '*') return true;
+        if (parent === child) return true;
+        if (parent.endsWith('.*')) {
+            const prefix = parent.slice(0, -1);
+            return child.startsWith(prefix);
+        }
+        return false;
+    }
+
+    /**
+     * Normalize permissions: deduplicate, validate modules/actions, ensure .view if other actions exist.
+     */
+    public normalizePermissions(permissions: string[]): string[] {
+        if (permissions.includes('*')) {
+            return ['*'];
+        }
+
+        const finalPermissions = new Set<string>();
+        const validActions = [...Object.values(ACTIONS), '*'];
+
+        for (const permission of permissions) {
+            const parts = permission.split('.');
+            const action = parts.pop();
+            const modulePath = parts.join('.');
+            if (!action || !validActions.includes(action as any)) {
+                throw new Error(`Invalid action "${action}" in permission "${permission}"`);
+            }
+            if (!modulePath || !isValidModulePath(modulePath)) {
+                throw new Error(`Bad Request: Invalid module: ${modulePath}`);
+            }
+            finalPermissions.add(permission);
+            if (action !== 'view' && action !== '*') {
+                finalPermissions.add(`${modulePath}.view`);
+            }
+        }
+
+        const sorted = Array.from(finalPermissions).sort((a, b) => b.length - a.length);
+        const result = new Set<string>();
+
+        const finalArray = Array.from(finalPermissions);
+        for (const p of finalArray) {
+            const isRedundant = finalArray.some(other => other !== p && this.isCoveredBy(p, other));
+            if (!isRedundant) {
+                result.add(p);
+            }
+        }
+
+        return Array.from(result);
     }
 }
