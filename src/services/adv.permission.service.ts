@@ -10,6 +10,7 @@ export class PermissionService {
 
     async create(data: { name: string; permissions?: string[]; metadata?: Record<string, any> }) {
         const existing = await this.permissionRepository.findByName(data.name);
+        console.log('Existing role check:', existing);
         if (existing) {
             throw new Error('Role with this name already exists');
         }
