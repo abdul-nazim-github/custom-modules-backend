@@ -5,6 +5,7 @@ import { SessionRepository } from '../repositories/session.repository.js';
 import { UserRepository } from '../repositories/user.repository.js';
 import { permissionMiddleware } from '../middlewares/permission.middleware.js';
 import { Permission } from '../config/roles.js';
+
 export const createAuthRoutes = (
     authController: AuthController,
     accessSecret: string,
@@ -12,6 +13,7 @@ export const createAuthRoutes = (
     userRepository: UserRepository
 ): Router => {
     const auth = authMiddleware(accessSecret, sessionRepository, userRepository);
+    const router = Router();
 
     router.post('/login', authController.login);
     router.post('/logout', auth, authController.logout);
