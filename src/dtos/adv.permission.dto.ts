@@ -1,17 +1,21 @@
-import { IsString, IsArray, IsOptional, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsArray, IsOptional, Matches } from 'class-validator';
 
 export class CreateRoleDto {
     @IsString()
-    @IsNotEmpty()
-    name!: string;
+    @IsOptional()
+    name?: string;
+
+    @IsString()
+    @IsOptional()
+    userId?: string;
 
     @IsArray()
     @IsString({ each: true })
-    @IsOptional()
-    permissions?: string[];
-
-    @IsOptional()
-    metadata?: Record<string, any>;
+    @Matches(/^(\*|[a-z]+(\.[a-z]+)*\.(view|create|edit|delete|\*))$/i, {
+        each: true,
+        message: 'Invalid permission format'
+    })
+    permissions!: string[];
 }
 
 export class UpdateRoleDto {
@@ -19,11 +23,16 @@ export class UpdateRoleDto {
     @IsOptional()
     name?: string;
 
+    @IsString()
+    @IsOptional()
+    userId?: string;
+
     @IsArray()
     @IsString({ each: true })
     @IsOptional()
+    @Matches(/^(\*|[a-z]+(\.[a-z]+)*\.(view|create|edit|delete|\*))$/i, {
+        each: true,
+        message: 'Invalid permission format'
+    })
     permissions?: string[];
-
-    @IsOptional()
-    metadata?: Record<string, any>;
 }

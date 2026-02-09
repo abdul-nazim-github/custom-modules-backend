@@ -1,25 +1,19 @@
-import { Schema, model, Document } from 'mongoose';
-
-export interface IAdvPermission extends Document {
-    name: string;
+import mongoose, { Schema, Document } from 'mongoose';
+export interface IPermission extends Document {
+    name?: string;
+    userId?: mongoose.Types.ObjectId | any;
     permissions: string[];
-    metadata: Record<string, any>;
-    status: number;
     created_at: Date;
     updated_at: Date;
 }
 
-const AdvPermissionSchema = new Schema({
-    name: { type: String, required: true, unique: true },
-    permissions: { type: [String], default: [] },
-    metadata: { type: Schema.Types.Mixed, default: {} },
-    status: { type: Number, default: 1 }
+const PermissionSchema: Schema = new Schema({
+    name: { type: String, unique: true, sparse: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'User', unique: true, sparse: true },
+    permissions: { type: [String], required: true },
 }, {
-    timestamps: {
-        createdAt: 'created_at',
-        updatedAt: 'updated_at'
-    },
-    versionKey: false
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+    versionKey: false,
 });
 
-export const AdvPermissionModel = model<IAdvPermission>('AdvPermission', AdvPermissionSchema);
+export const PermissionModel = mongoose.model<IPermission>('Permission', PermissionSchema, 'permissions');
