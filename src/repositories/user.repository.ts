@@ -14,7 +14,9 @@ export class UserRepository {
     async create(data: {
         email: string;
         password?: string;
-        name?: string;
+        first_name: string; 
+        last_name: string;
+        // name?: string;
         role?: string[];
         permissions?: string[];
         metadata?: Record<string, any>;
