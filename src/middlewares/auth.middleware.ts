@@ -16,6 +16,7 @@ declare global {
 
 export const authMiddleware = (
   accessSecret: string,
+  sessionRepository: any,
   userRepository: UserRepository
 ) => {
   return async (req: Request, res: Response, next: NextFunction) => {
