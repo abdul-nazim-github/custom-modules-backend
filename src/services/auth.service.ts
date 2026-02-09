@@ -18,7 +18,8 @@ export class AuthService {
     async register(payload: {
         email: string;
         password: string;
-        name?: string;
+        first_name?: string;
+        last_name?: string;
         role?: Role;
         device: { ip: string; userAgent: string };
     }) {
@@ -36,7 +37,8 @@ export class AuthService {
         const user = await this.userRepository.create({
             email: payload.email,
             password: hashedPassword,
-            name: payload.name,
+            first_name: payload.first_name,
+            last_name: payload.last_name,
             role: [userRole],
             permissions: defaultPermissions
         });
@@ -46,7 +48,9 @@ export class AuthService {
             data: {
                 id: user._id,
                 email: user.email,
-                name: user.name,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                full_name: `${user.first_name || ''} ${user.last_name || ''}`.trim(),
                 role: user.get('role'),
                 permissions: user.get('permissions'),
                 created_at: (user as any).created_at
