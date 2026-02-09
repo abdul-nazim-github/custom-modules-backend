@@ -2,7 +2,7 @@ import { IPermission } from '../models/adv.permission.model.js';
 import { CreateRoleDto, UpdateRoleDto } from '../dtos/adv.permission.dto.js';
 import mongoose from 'mongoose';
 import { PermissionRepository } from '../repositories/adv.permission.repository.js';
-import { ACTIONS, isValidModulePath } from '../config/roles.js';
+import { ACTIONS, isValidModulePath } from '../config/adv.permission.js';
 import { ConfigModel } from '../models/default.permission.model.js';
 
 export class PermissionService {

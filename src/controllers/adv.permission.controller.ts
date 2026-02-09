@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { PermissionService } from '../services/adv.permission.service.js';
-import { MODULES, ACTIONS, generateMatrix } from '../config/roles.js';
+import { MODULES, ACTIONS, generateMatrix } from '../config/adv.permission.js';
 
 export class PermissionController {
     private permissionService: PermissionService;
