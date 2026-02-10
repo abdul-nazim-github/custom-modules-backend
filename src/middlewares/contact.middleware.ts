@@ -65,7 +65,7 @@ export const protectContactListing = (
           success: false
         });
       }
-
+      
       req.user = {
         id: user._id.toString(),
         role: user.role,
