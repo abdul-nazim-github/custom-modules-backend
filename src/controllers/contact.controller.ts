@@ -20,7 +20,6 @@ export class ContactController {
                 success: true
             });
         } catch (error: any) {
-            // Log the actual error for debugging
             console.error(`Contact submission error: ${error.message}`);
 
             res.status(400).json({
