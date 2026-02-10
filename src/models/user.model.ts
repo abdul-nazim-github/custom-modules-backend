@@ -15,10 +15,19 @@ export class User {
     })
     password!: string;
 
+    // @IsString()
+    // @IsNotEmpty()
+    // @MinLength(3, { message: 'Name must be at least 3 characters long' })
+    // name!: string;
+
     @IsString()
     @IsNotEmpty()
     @MinLength(3, { message: 'Name must be at least 3 characters long' })
-    name!: string;
+    first_name!: string;
+
+    @IsString()
+    @MinLength(1)
+    last_name!: string;
 
     @IsOptional()
     metadata?: Record<string, any>;
@@ -41,7 +50,9 @@ export class User {
 const UserSchema = new Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    name: { type: String, required: true },
+    // name: { type: String, required: true },
+    first_name: { type: String, required: true },
+    last_name: { type: String, required: false },
     metadata: { type: Schema.Types.Mixed, default: {} },
     role: { type: [String], default: ['user'] },
     permissions: { type: [String], default: [] },

@@ -66,7 +66,7 @@ export class AuthService {
                 user: {
                     id: user._id,
                     email: user.email,
-                    name: user.name,
+                    full_name: `${user.first_name} ${user.last_name}`.trim(),
                     role: user.role || [Role.USER],
                     permissions: user.permissions || []
                 }
