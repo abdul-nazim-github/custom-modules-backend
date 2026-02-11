@@ -60,7 +60,6 @@ export const authMiddleware = (
       }
 
       const user = await userRepository.findById(decoded.userId);
-      console.log('Decoded User ID:', decoded.userId);
       console.log('User from DB:', user);
       if (!user) {
         return res.status(401).json({

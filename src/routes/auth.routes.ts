@@ -73,7 +73,7 @@ export const createAuthRoutes = (
     );
     router.put('/profile/edit',
         authMiddleware(accessSecret, sessionRepository, userRepository),
-        permissionMiddleware('modules~permission~profile'),
+        // permissionMiddleware('modules~permission~profile'),
         authController.editProfile
     );
 

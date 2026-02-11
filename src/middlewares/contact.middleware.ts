@@ -40,7 +40,6 @@ export const protectContactListing = (
       const decoded = jwt.verify(token, accessSecret) as any;
 
       const user = await userRepository.findById(decoded.userId) as any;
-      console.log('Decoded User ID:', decoded.userId);
       console.log('User from DB:', user);
       if (!user) {
         return res.status(401).json({

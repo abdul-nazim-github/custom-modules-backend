@@ -100,6 +100,19 @@ export class AuthController {
                     success: false
                 });
             }
+            if (!Array.isArray(role)) {
+                return res.status(400).json({
+                    message: 'Role must be an array of strings',
+                    success: false
+                });
+            }
+
+            if (role.length === 0) {
+                return res.status(400).json({
+                    message: 'At least one role must be provided',
+                    success: false
+                });
+            }
 
             const result = await this.authService.updateUserRole({
                 userId: userId as string,
@@ -306,8 +319,8 @@ export class AuthController {
 
     public editProfile = async (req: Request, res: Response) => {
         try {
-            const { first_name , last_name } = req.body;
-            const userId = req.user?.id; 
+            const { first_name, last_name } = req.body;
+            const userId = req.user?.id;
             if (!userId) {
                 return res.status(401).json({ message: 'Unauthorized', success: false });
             }
@@ -324,5 +337,5 @@ export class AuthController {
             });
         }
     };
-    
+
 }

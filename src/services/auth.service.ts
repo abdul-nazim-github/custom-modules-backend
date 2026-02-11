@@ -68,7 +68,7 @@ export class AuthService {
         };
     }
 
-    
+
     async login(payload: {
         email: string;
         password: string;
@@ -130,7 +130,7 @@ export class AuthService {
 
     async updateUserRole(payload: {
         userId: string;
-        newRole: Role;
+        newRole: Role[];
         updatedBy: string;
     }) {
         const updater = await this.userRepository.findById(payload.updatedBy as any);
@@ -145,18 +145,31 @@ export class AuthService {
             throw new Error('Only SUPER_ADMIN or users with manage_users permission can update user roles');
         }
 
-        if (!Object.values(Role).includes(payload.newRole)) {
-            throw new Error('Invalid role');
+        // Validate all roles
+        for (const role of payload.newRole) {
+            if (!Object.values(Role).includes(role)) {
+                throw new Error(`Invalid role: ${role}`);
+            }
         }
 
-        const newDefaultPermissions = RolePermissions[payload.newRole] || [];
+        // Merge permissions from all roles
+        const mergedPermissions = new Set<Permission>();
+        for (const role of payload.newRole) {
+            const rolePermissions = RolePermissions[role] || [];
+            rolePermissions.forEach(permission => mergedPermissions.add(permission));
+        }
 
-        const user = await this.userRepository.updateRole(payload.userId, [payload.newRole], newDefaultPermissions);
+        const user = await this.userRepository.updateRole(
+            payload.userId,
+            payload.newRole,
+            Array.from(mergedPermissions)
+        );
+
         if (!user) {
             throw new Error('User not found');
         }
 
-        logger.info(`User ${payload.userId} role updated to ${payload.newRole} and permissions synced by ${payload.updatedBy}`);
+        logger.info(`User ${payload.userId} roles updated to [${payload.newRole.join(', ')}] and permissions synced by ${payload.updatedBy}`);
 
         return {
             message: 'User role and permissions updated successfully',
