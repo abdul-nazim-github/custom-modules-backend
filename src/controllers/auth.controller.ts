@@ -68,7 +68,38 @@ export class AuthController {
         }
     };
 
-    public updateUserRole = async (req: Request, res: Response) => {
+    // public updateUserRole = async (req: Request, res: Response) => {
+    //     try {
+    //         const { userId } = req.params;
+    //         const { role } = req.body;
+    //         const updatedBy = req.user?.id;
+
+    //         if (!updatedBy) {
+    //             return res.status(401).json({
+    //                 message: 'Unauthorized',
+    //                 success: false
+    //             });
+    //         }
+
+    //         const result = await this.authService.updateUserRole({
+    //             userId: userId as string,
+    //             newRole: role,
+    //             updatedBy
+    //         });
+
+    //         return res.status(200).json({
+    //             ...result,
+    //             success: true
+    //         });
+    //     } catch (error: any) {
+    //         return res.status(400).json({
+    //             message: error.message,
+    //             success: false
+    //         });
+    //     }
+    // };
+
+      public updateUserRole = async (req: Request, res: Response) => {
         try {
             const { userId } = req.params;
             const { role } = req.body;
@@ -77,6 +108,19 @@ export class AuthController {
             if (!updatedBy) {
                 return res.status(401).json({
                     message: 'Unauthorized',
+                    success: false
+                });
+            }
+            if (!Array.isArray(role)) {
+                return res.status(400).json({
+                    message: 'Role must be an array of strings',
+                    success: false
+                });
+            }
+
+            if (role.length === 0) {
+                return res.status(400).json({
+                    message: 'At least one role must be provided',
                     success: false
                 });
             }
@@ -98,6 +142,7 @@ export class AuthController {
             });
         }
     };
+
 
     public updateUserPermissions = async (req: Request, res: Response) => {
         try {

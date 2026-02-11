@@ -66,7 +66,7 @@ export class AuthService {
                 user: {
                     id: user._id,
                     email: user.email,
-                    name: user.name,
+                    full_name: `${user.first_name} ${user.last_name}`.trim(),
                     role: user.role || [Role.USER],
                     permissions: user.permissions || []
                 }
@@ -81,47 +81,103 @@ export class AuthService {
         };
     }
 
-    async updateUserRole(payload: {
-        userId: string;
-        newRole: Role;
-        updatedBy: string;
-    }) {
-        const updater = await this.userRepository.findById(payload.updatedBy as any);
-        if (!updater) {
-            throw new Error('Unauthorized');
-        }
+    // async updateUserRole(payload: {
+    //     userId: string;
+    //     newRole: Role;
+    //     updatedBy: string;
+    // }) {
+    //     const updater = await this.userRepository.findById(payload.updatedBy as any);
+    //     if (!updater) {
+    //         throw new Error('Unauthorized');
+    //     }
 
-        const hasPermission = (updater.role && updater.role.includes('super_admin')) ||
-            (updater.permissions && updater.permissions.includes(Permission.MANAGE_USERS));
+    //     const hasPermission = (updater.role && updater.role.includes('super_admin')) ||
+    //         (updater.permissions && updater.permissions.includes(Permission.MANAGE_USERS));
 
-        if (!hasPermission) {
-            throw new Error('Only SUPER_ADMIN or users with manage_users permission can update user roles');
-        }
+    //     if (!hasPermission) {
+    //         throw new Error('Only SUPER_ADMIN or users with manage_users permission can update user roles');
+    //     }
 
-        if (!Object.values(Role).includes(payload.newRole)) {
-            throw new Error('Invalid role');
-        }
+    //     if (!Object.values(Role).includes(payload.newRole)) {
+    //         throw new Error('Invalid role');
+    //     }
 
-        const newDefaultPermissions = RolePermissions[payload.newRole] || [];
+    //     const newDefaultPermissions = RolePermissions[payload.newRole] || [];
 
-        const user = await this.userRepository.updateRole(payload.userId, [payload.newRole], newDefaultPermissions);
-        if (!user) {
-            throw new Error('User not found');
-        }
+    //     const user = await this.userRepository.updateRole(payload.userId, [payload.newRole], newDefaultPermissions);
+    //     if (!user) {
+    //         throw new Error('User not found');
+    //     }
 
-        logger.info(`User ${payload.userId} role updated to ${payload.newRole} and permissions synced by ${payload.updatedBy}`);
+    //     logger.info(`User ${payload.userId} role updated to ${payload.newRole} and permissions synced by ${payload.updatedBy}`);
 
-        return {
-            message: 'User role and permissions updated successfully',
-            data: {
-                id: user._id,
-                email: user.email,
-                name: user.name,
-                role: user.role,
-                permissions: user.permissions
-            }
-        };
+    //     return {
+    //         message: 'User role and permissions updated successfully',
+    //         data: {
+    //             id: user._id,
+    //             email: user.email,
+    //             name: user.name,
+    //             role: user.role,
+    //             permissions: user.permissions
+    //         }
+    //     };
+    // }
+
+        async updateUserRole(payload: {
+    userId: string;
+    newRole: Role[];  // ← Changed to array
+    updatedBy: string;
+}) {
+    const updater = await this.userRepository.findById(payload.updatedBy as any);
+    if (!updater) {
+        throw new Error('Unauthorized');
     }
+
+    const hasPermission = (updater.role && updater.role.includes('super_admin')) ||
+        (updater.permissions && updater.permissions.includes(Permission.MANAGE_USERS));
+
+    if (!hasPermission) {
+        throw new Error('Only SUPER_ADMIN or users with manage_users permission can update user roles');
+    }
+
+    // Validate all roles (NEW - loops through array)
+    for (const role of payload.newRole) {
+        if (!Object.values(Role).includes(role)) {
+            throw new Error(`Invalid role: ${role}`);
+        }
+    }
+
+    // Merge permissions from all roles (NEW - merges permissions)
+    const mergedPermissions = new Set<Permission>();
+    for (const role of payload.newRole) {
+        const rolePermissions = RolePermissions[role] || [];
+        rolePermissions.forEach(permission => mergedPermissions.add(permission));
+    }
+
+    const user = await this.userRepository.updateRole(
+        payload.userId, 
+        payload.newRole,  // ← Pass array directly
+        Array.from(mergedPermissions)  // ← Pass merged permissions
+    );
+    
+    if (!user) {
+        throw new Error('User not found');
+    }
+
+    logger.info(`User ${payload.userId} roles updated to [${payload.newRole.join(', ')}] and permissions synced by ${payload.updatedBy}`);
+
+    return {
+        message: 'User role and permissions updated successfully',
+        data: {
+            id: user._id,
+            email: user.email,
+            full_name: `${user.first_name} ${user.last_name}`.trim(),
+            role: user.role,
+            permissions: user.permissions
+        }
+    };
+}
+
 
     async updateUserPermissions(payload: {
         userId: string;
@@ -180,7 +236,7 @@ export class AuthService {
             data: items.map(user => ({
                 id: user._id,
                 email: user.email,
-                name: user.name,
+                full_name: `${user.first_name} ${user.last_name}`.trim(),
                 role: user.role || [Role.USER],
                 permissions: user.permissions || [],
                 created_at: (user as any).created_at
