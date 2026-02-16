@@ -80,18 +80,18 @@ export class PermissionService {
         let user = null;
 
         // Case 1: Populated by Mongoose (userId is the user object)
-        if (obj.userId && typeof obj.userId === 'object' && (obj.userId.name || obj.userId.email)) {
+        if (obj.userId && typeof obj.userId === 'object' && (obj.userId.full_name || obj.userId.email)) {
             user = {
                 id: obj.userId._id,
-                name: obj.userId.name,
+                full_name: obj.userId.full_name,
                 email: obj.userId.email
             };
         }
         // Case 2: From Aggregation (user object exists separately)
-        else if (obj.user && typeof obj.user === 'object' && (obj.user.name || obj.user.email)) {
+        else if (obj.user && typeof obj.user === 'object' && (obj.user.full_name || obj.user.email)) {
             user = {
                 id: obj.user._id,
-                name: obj.user.name,
+                full_name: obj.user.full_name,
                 email: obj.user.email
             };
         }

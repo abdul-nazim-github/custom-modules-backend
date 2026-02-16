@@ -14,7 +14,8 @@ export class UserRepository {
     async create(data: {
         email: string;
         password?: string;
-        name?: string;
+        first_name: string;
+        last_name: string;
         role?: string[];
         permissions?: string[];
         metadata?: Record<string, any>;
@@ -51,7 +52,8 @@ export class UserRepository {
         }
         if (filters.search) {
             query.$or = [
-                { name: { $regex: filters.search, $options: 'i' } },
+                { first_name: { $regex: filters.search, $options: 'i' } },
+                { last_name: { $regex: filters.search, $options: 'i' } },
                 { email: { $regex: filters.search, $options: 'i' } }
             ];
         }

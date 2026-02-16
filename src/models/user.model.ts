@@ -16,10 +16,20 @@ export class User {
     })
     password!: string;
 
+    // @IsString()
+    // @IsNotEmpty()
+    // @MinLength(3, { message: 'Name must be at least 3 characters long' })
+    // name!: string;
+
     @IsString()
     @IsNotEmpty()
-    @MinLength(3, { message: 'Name must be at least 3 characters long' })
-    name!: string;
+    @MinLength(3, { message: 'First name must be at least 3 characters long' })
+    first_name!: string;
+    
+    @IsString()
+    @IsNotEmpty()
+    @MinLength(3, { message: 'Last name must be at least 3 characters long' })
+    last_name!: string;
 
     @IsOptional()
     metadata?: Record<string, any>;
@@ -42,7 +52,9 @@ export class User {
 const UserSchema = new Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    name: { type: String, required: true },
+    // name: { type: String, required: true },
+    first_name: { type: String, required: true },
+    last_name: { type: String, required: false },
     metadata: { type: Schema.Types.Mixed, default: {} },
     role: { type: [String], default: ['user'] },
     permissions: { type: [String], default: [] },
@@ -53,7 +65,13 @@ const UserSchema = new Schema({
         createdAt: 'created_at',
         updatedAt: false
     },
-    versionKey: false
+    versionKey: false,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
+
+UserSchema.virtual('full_name').get(function () {
+    return `${this.first_name || ''} ${this.last_name || ''}`.trim();
 });
 
 export const UserModel = model<User & Document>('User', UserSchema);

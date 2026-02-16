@@ -10,18 +10,24 @@ export class UserController {
      */
     create = async (req: Request, res: Response) => {
         try {
-            const { role, custom_permissions, email } = req.body;
+            const { first_name, last_name, role, custom_permissions, email } = req.body;
             const roleInput = Array.isArray(role) ? role : (role ? [role] : []);
 
             const finalPermissions = await this.roleService.resolveUserPermissions(roleInput, custom_permissions || []);
 
             const user = await UserModel.create({
                 email,
+                first_name,
+                last_name,
                 role: roleInput,
                 permissions: finalPermissions
             });
 
-            res.status(201).json({ message: 'User created successfully', success: true, data: user });
+            res.status(201).json({
+                message: 'User created successfully',
+                success: true,
+                data: user.toObject()
+            });
         } catch (error: any) {
             res.status(500).json({ message: error.message, success: false });
         }
@@ -43,7 +49,15 @@ export class UserController {
                 permissions: finalPermissions
             }, { new: true });
 
-            res.status(200).json({ message: 'User access updated', success: true, data: updated });
+            if (!updated) {
+                return res.status(404).json({ message: 'User not found', success: false });
+            }
+
+            res.status(200).json({
+                message: 'User access updated',
+                success: true,
+                data: updated.toObject()
+            });
         } catch (error: any) {
             res.status(500).json({ message: error.message, success: false });
         }
@@ -71,7 +85,7 @@ export class UserController {
             res.status(200).json({
                 message: 'User access assigned successfully',
                 success: true,
-                data: user
+                data: user.toObject()
             });
         } catch (error: any) {
             res.status(500).json({ message: error.message, success: false });

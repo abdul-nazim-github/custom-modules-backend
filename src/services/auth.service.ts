@@ -26,7 +26,8 @@ export class AuthService {
     async register(payload: {
         email: string;
         password: string;
-        name?: string;
+        first_name: string;
+        last_name: string;
         role?: string;
         device: { ip: string; userAgent: string };
     }) {
@@ -45,21 +46,15 @@ export class AuthService {
         const user = await this.userRepository.create({
             email: payload.email,
             password: hashedPassword,
-            name: payload.name,
+            first_name: payload.first_name,
+            last_name: payload.last_name,
             role: [userRole],
             permissions: defaultPermissions
         });
 
         return {
             message: 'User registered successfully',
-            data: {
-                id: user._id,
-                email: user.email,
-                name: user.name,
-                role: user.role,
-                permissions: user.permissions,
-                created_at: (user as any).created_at
-            }
+            data: user.toObject()
         };
     }
 
@@ -104,13 +99,7 @@ export class AuthService {
             data: {
                 accessToken,
                 refreshToken,
-                user: {
-                    id: user._id,
-                    email: user.email,
-                    name: user.name,
-                    role: user.role || [Role.USER],
-                    permissions: user.permissions || []
-                }
+                user: user.toObject()
             }
         };
     }
@@ -140,14 +129,7 @@ export class AuthService {
 
         return {
             message: 'Users retrieved successfully',
-            data: items.map(user => ({
-                id: user._id,
-                email: user.email,
-                name: user.name,
-                role: user.role || [Role.USER],
-                permissions: user.permissions || [],
-                created_at: (user as any).created_at
-            })),
+            data: items.map(user => user.toObject()),
             totalCount
         };
     }
@@ -276,5 +258,102 @@ export class AuthService {
             message: 'User deleted successfully'
         };
     }
+    async updateProfile(userId: string, data: { first_name: string, last_name: string }) {
+            const user = await this.userRepository.findById(userId as any);
+            if (!user) {
+                throw new Error('User not found');
+            }
 
-}
+            user.first_name = data.first_name;
+            user.last_name = data.last_name;
+            await (user as any).save();
+
+            return {
+                message: 'Profile updated successfully',
+                data: user.toObject()
+            };
+        }
+
+    async updateUserRole(payload: {
+            userId: string;
+            newRole: Role[];
+            updatedBy: string;
+        }) {
+            const updater = await this.userRepository.findById(payload.updatedBy as any);
+            if (!updater) {
+                throw new Error('Unauthorized');
+            }
+
+            const hasPermission = (updater.role && updater.role.includes('super_admin')) ||
+                (updater.permissions && updater.permissions.includes(Permission.MANAGE_USERS));
+
+            if (!hasPermission) {
+                throw new Error('Only SUPER_ADMIN or users with manage_users permission can update user roles');
+            }
+
+            // Validate all roles
+            const validRoles = Object.values(Role) as string[];
+            for (const role of payload.newRole) {
+                if (!validRoles.includes(role)) {
+                    throw new Error(`Invalid role: ${role}`);
+                }
+            }
+
+            // Merge permissions from all roles
+            const mergedPermissions = new Set<Permission>();
+            for (const role of payload.newRole) {
+                const rolePermissions = RolePermissions[role] || [];
+                rolePermissions.forEach(permission => mergedPermissions.add(permission));
+            }
+
+            const user = await this.userRepository.updateRole(
+                payload.userId,
+                payload.newRole,
+                Array.from(mergedPermissions)
+            );
+
+            if (!user) {
+                throw new Error('User not found');
+            }
+
+            logger.info(`User ${payload.userId} roles updated to [${payload.newRole.join(', ')}] and permissions synced by ${payload.updatedBy}`);
+
+            return {
+                message: 'User role and permissions updated successfully',
+                data: user.toObject()
+            };
+        }
+
+    async updateUserPermissions(payload: {
+            userId: string;
+            permissions: string[];
+            updatedBy: string;
+        }) {
+            const updater = await this.userRepository.findById(payload.updatedBy as any);
+            if (!updater) {
+                throw new Error('Unauthorized');
+            }
+
+            const hasPermission = (updater.role && updater.role.includes('super_admin')) ||
+                (updater.permissions && updater.permissions.includes(Permission.MANAGE_PERMISSIONS));
+
+            if (!hasPermission) {
+                throw new Error('Only SUPER_ADMIN or users with manage_permissions permission can update user permissions');
+            }
+
+            const user = await this.userRepository.findById(payload.userId as any);
+            if (!user) {
+                throw new Error('User not found');
+            }
+
+            const updatedUser = await this.userRepository.updatePermissions(payload.userId, payload.permissions);
+
+            if (!updatedUser) {
+                throw new Error('Failed to update user permissions');
+            }
+            return {
+                message: 'User permissions updated successfully',
+                data: updatedUser.toObject()
+            };
+        }
+    }
