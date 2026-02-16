@@ -47,8 +47,8 @@ export class UserRepository {
         sort?: string;
     }) {
         const query: any = { deleted_at: null };
-        if (filters.role) {
-            query.role = filters.role;
+        if (filters.role && filters.role.length > 0) {
+            query.role = { $in: filters.role };
         }
         if (filters.search) {
             query.$or = [

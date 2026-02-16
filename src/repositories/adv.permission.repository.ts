@@ -4,7 +4,7 @@ export class PermissionRepository {
     async create(data: any): Promise<IPermission> {
         const permission = new PermissionModel(data);
         const saved = await permission.save();
-        return (await PermissionModel.findById(saved._id).populate('userId', 'name email')) as IPermission;
+        return (await PermissionModel.findById(saved._id).populate('userId', 'first_name last_name email')) as IPermission;
     }
 
     async findAll(filters: {
@@ -30,7 +30,8 @@ export class PermissionRepository {
         const match: any = {};
         if (filters.search) {
             match.$or = [
-                { 'user.name': { $regex: filters.search, $options: 'i' } },
+                { 'user.first_name': { $regex: filters.search, $options: 'i' } },
+                { 'user.last_name': { $regex: filters.search, $options: 'i' } },
                 { 'user.email': { $regex: filters.search, $options: 'i' } }
             ];
         }
@@ -46,7 +47,7 @@ export class PermissionRepository {
                 'date': 'created_at',
                 'created_at': 'created_at',
                 'updated_at': 'updated_at',
-                'name': 'user.name'
+                'name': 'user.first_name'
             };
             const sortField = fieldMap[field] || field;
             sortObj = { [sortField]: order === 'desc' ? -1 : 1 };
@@ -68,7 +69,8 @@ export class PermissionRepository {
                         userId: '$user._id',
                         user: {
                             _id: '$user._id',
-                            name: '$user.name',
+                            first_name: '$user.first_name',
+                            last_name: '$user.last_name',
                             email: '$user.email'
                         }
                     }
@@ -87,11 +89,11 @@ export class PermissionRepository {
     }
 
     async findById(id: string): Promise<IPermission | null> {
-        return await PermissionModel.findById(id).populate('userId', 'name email');
+        return await PermissionModel.findById(id).populate('userId', 'first_name last_name email');
     }
 
     async update(id: string, data: any): Promise<IPermission | null> {
-        return await PermissionModel.findByIdAndUpdate(id, data, { new: true }).populate('userId', 'name email');
+        return await PermissionModel.findByIdAndUpdate(id, data, { new: true }).populate('userId', 'first_name last_name email');
     }
 
     async delete(id: string): Promise<IPermission | null> {
