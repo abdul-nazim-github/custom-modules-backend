@@ -63,6 +63,12 @@ export class RoleService {
         if (!role) {
             throw new Error('Role not found or already deleted');
         }
+
+        // Prevent deletion of default roles
+        if (role.is_default) {
+            throw new Error(`Cannot delete default role '${role.name}'`);
+        }
+
         const usersWithRole = await UserModel.countDocuments({
             role: role.name
         });
