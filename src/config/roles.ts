@@ -38,53 +38,10 @@ export const RolePermissions: Record<Role, Permission[]> = {
     ]
 };
 
-export const MODULES = {
-    PROFILE: {
-        key: 'profile',
-        submodules: {}
-    },
-    SETTINGS: {
-        key: 'settings',
-        submodules: {}
-    },
-    ACTIVITY: {
-        key: 'activity',
-        submodules: {}
-    },
-    SECURITY: {
-        key: 'security',
-        submodules: {
-            EMAIL: {
-                key: 'email',
-                submodules: {}
-            },
-        }
-    },
-    USERS: {
-        key: 'users',
-        submodules: {}
-    },
-    PERMISSIONS: {
-        key: 'permissions',
-        submodules: {}
-    },
-    CONTACT: {
-        key: 'contact',
-        submodules: {}
-    },
-    CLOSETAB: {
-        key: 'closetab',
-        submodules: {}
-    }
-} as const;
+import { MODULES as ADV_MODULES, ACTIONS as ADV_ACTIONS } from './adv.permission.js';
 
-export const ACTIONS = {
-    VIEW: 'view',
-    CREATE: 'create',
-    EDIT: 'edit',
-    DELETE: 'delete',
-    TAB: 'tab',
-} as const;
+export const MODULES = ADV_MODULES;
+export const ACTIONS = ADV_ACTIONS;
 
 export const isValidModulePath = (path: string): boolean => {
     const parts = path.split('.');

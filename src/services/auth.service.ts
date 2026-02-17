@@ -7,20 +7,24 @@ import { SessionService } from './session.service.js';
 import { logger } from '../utils/logger.js';
 import { Role, RolePermissions, Permission } from '../config/roles.js';
 import { sendResetEmail } from '../utils/email.util.js';
+import { PermissionService } from './adv.permission.service.js';
 
 export class AuthService {
     private config: AuthConfig;
     private userRepository: UserRepository;
     private sessionService: SessionService;
+    private permissionService: PermissionService;
 
     constructor(
         config: AuthConfig,
         userRepository: UserRepository,
-        sessionService: SessionService
+        sessionService: SessionService,
+        permissionService: PermissionService
     ) {
         this.config = config;
         this.userRepository = userRepository;
         this.sessionService = sessionService;
+        this.permissionService = permissionService;
     }
 
     async register(payload: {
@@ -51,6 +55,9 @@ export class AuthService {
             role: [userRole],
             permissions: defaultPermissions
         });
+
+        // Assign default permissions to the new user in the permissions collection
+        await this.permissionService.assignDefaultPermissions(user._id.toString(), defaultPermissions);
 
         return {
             message: 'User registered successfully',
@@ -259,101 +266,108 @@ export class AuthService {
         };
     }
     async updateProfile(userId: string, data: { first_name: string, last_name: string }) {
-            const user = await this.userRepository.findById(userId as any);
-            if (!user) {
-                throw new Error('User not found');
-            }
-
-            user.first_name = data.first_name;
-            user.last_name = data.last_name;
-            await (user as any).save();
-
-            return {
-                message: 'Profile updated successfully',
-                data: user.toObject()
-            };
+        const user = await this.userRepository.findById(userId as any);
+        if (!user) {
+            throw new Error('User not found');
         }
+
+        user.first_name = data.first_name;
+        user.last_name = data.last_name;
+        await (user as any).save();
+
+        return {
+            message: 'Profile updated successfully',
+            data: user.toObject()
+        };
+    }
 
     async updateUserRole(payload: {
-            userId: string;
-            newRole: Role[];
-            updatedBy: string;
-        }) {
-            const updater = await this.userRepository.findById(payload.updatedBy as any);
-            if (!updater) {
-                throw new Error('Unauthorized');
-            }
-
-            const hasPermission = (updater.role && updater.role.includes('super_admin')) ||
-                (updater.permissions && updater.permissions.includes(Permission.MANAGE_USERS));
-
-            if (!hasPermission) {
-                throw new Error('Only SUPER_ADMIN or users with manage_users permission can update user roles');
-            }
-
-            // Validate all roles
-            const validRoles = Object.values(Role) as string[];
-            for (const role of payload.newRole) {
-                if (!validRoles.includes(role)) {
-                    throw new Error(`Invalid role: ${role}`);
-                }
-            }
-
-            // Merge permissions from all roles
-            const mergedPermissions = new Set<Permission>();
-            for (const role of payload.newRole) {
-                const rolePermissions = RolePermissions[role] || [];
-                rolePermissions.forEach(permission => mergedPermissions.add(permission));
-            }
-
-            const user = await this.userRepository.updateRole(
-                payload.userId,
-                payload.newRole,
-                Array.from(mergedPermissions)
-            );
-
-            if (!user) {
-                throw new Error('User not found');
-            }
-
-            logger.info(`User ${payload.userId} roles updated to [${payload.newRole.join(', ')}] and permissions synced by ${payload.updatedBy}`);
-
-            return {
-                message: 'User role and permissions updated successfully',
-                data: user.toObject()
-            };
+        userId: string;
+        newRole: Role[];
+        updatedBy: string;
+    }) {
+        const updater = await this.userRepository.findById(payload.updatedBy as any);
+        if (!updater) {
+            throw new Error('Unauthorized');
         }
+
+        const hasPermission = (updater.role && updater.role.includes('super_admin')) ||
+            (updater.permissions && updater.permissions.includes(Permission.MANAGE_USERS));
+
+        if (!hasPermission) {
+            throw new Error('Only SUPER_ADMIN or users with manage_users permission can update user roles');
+        }
+
+        // Validate all roles
+        const validRoles = Object.values(Role) as string[];
+        for (const role of payload.newRole) {
+            if (!validRoles.includes(role)) {
+                throw new Error(`Invalid role: ${role}`);
+            }
+        }
+
+        // Merge permissions from all roles
+        const mergedPermissions = new Set<Permission>();
+        for (const role of payload.newRole) {
+            const rolePermissions = RolePermissions[role] || [];
+            rolePermissions.forEach(permission => mergedPermissions.add(permission));
+        }
+
+        const user = await this.userRepository.updateRole(
+            payload.userId,
+            payload.newRole,
+            Array.from(mergedPermissions)
+        );
+
+        // Sync with permissions collection
+        await this.permissionService.assignDefaultPermissions(payload.userId, Array.from(mergedPermissions));
+
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        logger.info(`User ${payload.userId} roles updated to [${payload.newRole.join(', ')}] and permissions synced by ${payload.updatedBy}`);
+
+        return {
+            message: 'User role and permissions updated successfully',
+            data: user.toObject()
+        };
+    }
 
     async updateUserPermissions(payload: {
-            userId: string;
-            permissions: string[];
-            updatedBy: string;
-        }) {
-            const updater = await this.userRepository.findById(payload.updatedBy as any);
-            if (!updater) {
-                throw new Error('Unauthorized');
-            }
-
-            const hasPermission = (updater.role && updater.role.includes('super_admin')) ||
-                (updater.permissions && updater.permissions.includes(Permission.MANAGE_PERMISSIONS));
-
-            if (!hasPermission) {
-                throw new Error('Only SUPER_ADMIN or users with manage_permissions permission can update user permissions');
-            }
-
-            const user = await this.userRepository.findById(payload.userId as any);
-            if (!user) {
-                throw new Error('User not found');
-            }
-
-            const updatedUser = await this.userRepository.updatePermissions(payload.userId, payload.permissions);
-
-            if (!updatedUser) {
-                throw new Error('Failed to update user permissions');
-            }
-            return {
-                message: 'User permissions updated successfully',
-                data: updatedUser.toObject()
-            };
+        userId: string;
+        permissions: string[];
+        updatedBy: string;
+    }) {
+        const updater = await this.userRepository.findById(payload.updatedBy as any);
+        if (!updater) {
+            throw new Error('Unauthorized');
         }
+
+        const hasPermission = (updater.role && updater.role.includes('super_admin')) ||
+            (updater.permissions && updater.permissions.includes(Permission.MANAGE_PERMISSIONS));
+
+        if (!hasPermission) {
+            throw new Error('Only SUPER_ADMIN or users with manage_permissions permission can update user permissions');
+        }
+
+        const user = await this.userRepository.findById(payload.userId as any);
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        const updatedUser = await this.userRepository.updatePermissions(payload.userId, payload.permissions);
+
+        // Sync with permissions collection
+        // Sync with permissions collection
+        await this.permissionService.syncPermissions(payload.userId, payload.permissions);
+
+        if (!updatedUser) {
+            throw new Error('Failed to update user permissions');
+        }
+        return {
+            message: 'User permissions updated successfully',
+            data: updatedUser.toObject()
+        };
     }
+}

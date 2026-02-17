@@ -1,4 +1,5 @@
 import { IPermission, PermissionModel } from '../models/adv.permission.model.js';
+import mongoose from 'mongoose';
 
 export class PermissionRepository {
     async create(data: any): Promise<IPermission> {
@@ -92,6 +93,10 @@ export class PermissionRepository {
         return await PermissionModel.findById(id).populate('userId', 'first_name last_name email');
     }
 
+    async findByUserId(userId: string): Promise<IPermission | null> {
+        return await PermissionModel.findOne({ userId: new mongoose.Types.ObjectId(userId) }).populate('userId', 'first_name last_name email');
+    }
+
     async update(id: string, data: any): Promise<IPermission | null> {
         return await PermissionModel.findByIdAndUpdate(id, data, { new: true }).populate('userId', 'first_name last_name email');
     }
@@ -100,10 +105,10 @@ export class PermissionRepository {
         return await PermissionModel.findByIdAndDelete(id);
     }
     async updatePermissions(userId: string, permissions: string[]) {
-        return PermissionModel.findByIdAndUpdate(
-            userId,
+        return PermissionModel.findOneAndUpdate(
+            { userId: new mongoose.Types.ObjectId(userId) },
             { permissions },
-            { new: true }
+            { new: true, upsert: true }
         );
     }
 }

@@ -4,11 +4,18 @@ import mongoose from 'mongoose';
 import { PermissionRepository } from '../repositories/adv.permission.repository.js';
 import { ACTIONS, isValidModulePath } from '../config/adv.permission.js';
 import { ConfigModel } from '../models/default.permission.model.js';
+import { UserRepository } from '../repositories/user.repository.js';
 
 export class PermissionService {
     private permissionRepository: PermissionRepository;
-    constructor(permissionRepository: PermissionRepository) {
+    private userRepository: UserRepository;
+
+    constructor(
+        permissionRepository: PermissionRepository,
+        userRepository: UserRepository
+    ) {
         this.permissionRepository = permissionRepository;
+        this.userRepository = userRepository;
     }
 
     async create(data: CreateRoleDto): Promise<any> {
@@ -17,6 +24,7 @@ export class PermissionService {
         const defaultPerms = config ? config.permissions : [];
         const requestedPerms = data.permissions || [];
 
+        // Check for duplicates in the request itself
         const seenInRequest = new Set<string>();
         for (const p of requestedPerms) {
             if (seenInRequest.has(p)) {
@@ -24,15 +32,8 @@ export class PermissionService {
             }
             seenInRequest.add(p);
         }
-        for (const p of requestedPerms) {
-            for (const dp of defaultPerms) {
-                if (this.isCoveredBy(p, dp)) {
-                    throw new Error(`Permission '${p}' is already covered by default permission '${dp}'`);
-                }
-            }
-        }
 
-        // Merge defaults with requested permissions
+        // Merge defaults with requested permissions - normalization handles redundancy silently
         const mergedPermissions = [...new Set([...defaultPerms, ...requestedPerms])];
 
         const permissions = this.normalizePermissions(mergedPermissions);
@@ -47,6 +48,12 @@ export class PermissionService {
         }
 
         const permission = await this.permissionRepository.create(roleData);
+
+        // Sync with User model
+        if (roleData.userId) {
+            await this.userRepository.updatePermissions(roleData.userId.toString(), permissions);
+        }
+
         return this.formatPermissionResponse(permission);
     }
 
@@ -70,7 +77,13 @@ export class PermissionService {
     }
 
     async getOne(id: string): Promise<any | null> {
-        const permission = await this.permissionRepository.findById(id);
+        let permission = await this.permissionRepository.findById(id);
+
+        if (!permission && mongoose.Types.ObjectId.isValid(id)) {
+            // Smart lookup: try by userId if not found by permissionId
+            permission = await this.permissionRepository.findByUserId(id);
+        }
+
         return permission ? this.formatPermissionResponse(permission) : null;
     }
 
@@ -113,12 +126,35 @@ export class PermissionService {
         if (data.userId) {
             updateData.userId = new mongoose.Types.ObjectId(data.userId);
         }
-        const permission = await this.permissionRepository.update(id, updateData);
+        let permission = await this.permissionRepository.update(id, updateData);
+
+        if (!permission && mongoose.Types.ObjectId.isValid(id)) {
+            // Smart lookup: try finding by userId to get the real permission ID
+            const existing = await this.permissionRepository.findByUserId(id);
+            if (existing) {
+                permission = await this.permissionRepository.update(existing._id.toString(), updateData);
+            }
+        }
+
+        // Sync with User model
+        if (permission && permission.userId && updateData.permissions) {
+            const userId = typeof permission.userId === 'object' ? permission.userId._id.toString() : permission.userId.toString();
+            await this.userRepository.updatePermissions(userId, updateData.permissions);
+        }
+
         return permission ? this.formatPermissionResponse(permission) : null;
     }
 
     async delete(id: string): Promise<IPermission | null> {
-        return this.permissionRepository.delete(id);
+        const permission = await this.permissionRepository.delete(id);
+
+        // Sync with User model (clear permissions)
+        if (permission && permission.userId) {
+            const userId = typeof permission.userId === 'object' ? permission.userId._id.toString() : permission.userId.toString();
+            await this.userRepository.updatePermissions(userId, []);
+        }
+
+        return permission;
     }
 
     /**
@@ -186,7 +222,17 @@ export class PermissionService {
         console.log('Default permissions to assign:', defaultPerms);
         const finalPermissions = this.normalizePermissions([...defaultPerms, ...requestedPermissions]);
         console.log('Final permissions to assign:', finalPermissions);
+
+        // Sync with User model
+        await this.userRepository.updatePermissions(userId, finalPermissions);
+
         return this.permissionRepository.updatePermissions(userId, finalPermissions);
     }
 
+    async syncPermissions(userId: string, permissions: string[]) {
+        const finalPermissions = this.normalizePermissions(permissions);
+        // Sync with User model
+        await this.userRepository.updatePermissions(userId, finalPermissions);
+        return this.permissionRepository.updatePermissions(userId, finalPermissions);
+    }
 }

@@ -40,7 +40,11 @@ export class AuthModule {
         const userRepository = new UserRepository();
         const sessionRepository = new SessionRepository();
         const sessionService = new SessionService(sessionRepository, this.config);
-        const authService = new AuthService(this.config, userRepository, sessionService);
+
+        const permissionRepository = new PermissionRepository();
+        const permissionService = new PermissionService(permissionRepository, userRepository);
+
+        const authService = new AuthService(this.config, userRepository, sessionService, permissionService);
         const authController = new AuthController(authService);
         this.router.use('/auth', createAuthRoutes(authController, this.config.jwt.accessSecret, sessionRepository, userRepository));
 
@@ -49,8 +53,6 @@ export class AuthModule {
         const contentController = new ContentController(contentService);
         this.router.use('/content', createContentRoutes(contentController, this.config.jwt.accessSecret, sessionRepository, userRepository));
 
-        const permissionRepository = new PermissionRepository();
-        const permissionService = new PermissionService(permissionRepository);
         const permissionController = new PermissionController(permissionService);
         this.router.use('/permissions', createAdvPermissionRoutes(
             permissionController,

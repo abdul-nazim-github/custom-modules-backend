@@ -11,7 +11,7 @@ export class CreateRoleDto {
 
     @IsArray()
     @IsString({ each: true })
-    @Matches(/^(\*|[a-z]+(\.[a-z]+)*\.(view|create|edit|delete|\*))$/i, {
+    @Matches(/^(\*|[a-z]+(\.[a-z]+)*\.(view|create|edit|delete|tab|\*))$/i, {
         each: true,
         message: 'Invalid permission format'
     })
@@ -30,7 +30,7 @@ export class UpdateRoleDto {
     @IsArray()
     @IsString({ each: true })
     @IsOptional()
-    @Matches(/^(\*|[a-z]+(\.[a-z]+)*\.(view|create|edit|delete|\*))$/i, {
+    @Matches(/^(\*|[a-z]+(\.[a-z]+)*\.(view|create|edit|delete|tab|\*))$/i, {
         each: true,
         message: 'Invalid permission format'
     })
