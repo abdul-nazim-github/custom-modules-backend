@@ -72,6 +72,32 @@ export class AuthController {
         }
     };
 
+    public session = async (req: Request, res: Response) => {
+        try {
+            if (!req.user) {
+                return res.status(200).json({
+                    authenticated: false,
+                    message: 'Session tokens missing',
+                    success: false
+                });
+            }
+
+            const user = await this.authService.getProfile(req.user.id);
+            res.json({
+                authenticated: true,
+                message: 'Session is active',
+                data: user,
+                success: true
+            });
+        } catch (error: any) {
+            res.status(200).json({
+                authenticated: false,
+                message: error.message || 'Session validation failed',
+                success: false
+            });
+        }
+    };
+
     public register = async (req: Request, res: Response) => {
         try {
             const device = {

@@ -15,6 +15,12 @@ const port = process.env.PORT || 3018;
 // Trust proxy so req.ip works correctly behind Render/Nginx
 app.set('trust proxy', 1);
 
+// DEBUG LOG: Log every single request that enters the server
+app.use((req, res, next) => {
+    console.log(`[ACCESS LOG] ${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+});
+
 const authConfig = {
     mongoUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/auth-db',
     jwt: {
