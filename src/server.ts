@@ -12,6 +12,9 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3018;
 
+// Trust proxy so req.ip works correctly behind Render/Nginx
+app.set('trust proxy', 1);
+
 app.use(express.json());
 
 const authConfig = {
@@ -49,6 +52,16 @@ app.get('/api/ping', (req, res) => {
 
 const authModule = AuthModule.init(authConfig);
 app.use('/api', authModule.router);
+
+// Global Error Handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    logger.error(`Unhandled Error: ${err.message}`);
+    console.error(err.stack);
+    res.status(err.status || 500).json({
+        message: err.message || 'Internal Server Error',
+        success: false
+    });
+});
 
 const start = async () => {
     try {

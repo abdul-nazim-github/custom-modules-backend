@@ -36,8 +36,10 @@ export class AuthController {
                 success: true
             });
         } catch (error: any) {
-            res.status(401).json({
-                message: error.message,
+            console.error('Login Error:', error);
+            const statusCode = error.message === 'Invalid credentials' ? 401 : 500;
+            res.status(statusCode).json({
+                message: error.message || 'Internal Server Error',
                 success: false
             });
         }
