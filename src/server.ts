@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import { AuthModule } from './index.js';
 import { logger } from './utils/logger.js';
 import { startKeepAlive } from './utils/ping.util.js';
+import cors from 'cors';
 
 dotenv.config();
 
@@ -33,6 +34,13 @@ const authConfig = {
         from: process.env.EMAIL_FROM || 'ayan.ghosh@codeclouds.com'
     }
 };
+
+app.use(cors({
+    origin: [authConfig.frontendUrl],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    credentials: true
+}));
 
 // for keep-alive
 app.get('/api/ping', (req, res) => {
