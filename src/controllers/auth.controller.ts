@@ -9,11 +9,16 @@ export class AuthController {
     }
 
     public login = async (req: Request, res: Response) => {
-        console.log('DEBUG: Login attempt started');
-        console.log('DEBUG: Headers:', JSON.stringify(req.headers));
+        console.log('******************************************');
+        console.log('!!! LOGIN API HIT !!!');
+        console.log('Method:', req.method);
+        console.log('URL:', req.url);
+        console.log('Headers:', JSON.stringify(req.headers));
+        console.log('Body:', JSON.stringify(req.body));
+        console.log('******************************************');
+
         try {
             const { email, password, ...extra } = req.body;
-            console.log('DEBUG: Request body email:', email);
             if (!email || !password) {
                 return res.status(400).json({
                     message: 'Email and password are required',

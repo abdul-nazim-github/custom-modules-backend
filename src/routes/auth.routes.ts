@@ -19,7 +19,6 @@ export const createAuthRoutes = (
 
     router.post('/login', authController.login);
     router.get('/me', authMiddleware(accessSecret, sessionRepository, userRepository), authController.me);
-    router.get('/session', authMiddleware(accessSecret, sessionRepository, userRepository), authController.session);
     router.post('/register', checkEmailExists(userRepository), validateBody(User), authController.register);
     router.post('/logout', authMiddleware(accessSecret, sessionRepository, userRepository), authController.logout);
     router.post('/forgot-password', authController.forgotPassword);
