@@ -111,6 +111,12 @@ export class AuthService {
         };
     }
 
+    async getProfile(userId: string) {
+        const user = await this.userRepository.findById(userId as any);
+        if (!user) throw new Error('User not found');
+        return user.toObject();
+    }
+
     async logout(payload: { sessionId: string }) {
         await this.sessionService.deactivateSession(payload.sessionId);
         return {

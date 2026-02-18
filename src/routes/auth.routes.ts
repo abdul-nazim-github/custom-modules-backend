@@ -18,6 +18,7 @@ export const createAuthRoutes = (
     const router = Router();
 
     router.post('/login', authController.login);
+    router.get('/me', authMiddleware(accessSecret, sessionRepository, userRepository), authController.me);
     router.post('/register', checkEmailExists(userRepository), validateBody(User), authController.register);
     router.post('/logout', authMiddleware(accessSecret, sessionRepository, userRepository), authController.logout);
     router.post('/forgot-password', authController.forgotPassword);
@@ -28,7 +29,7 @@ export const createAuthRoutes = (
     router.get('/profile',
         authMiddleware(accessSecret, sessionRepository, userRepository),
         permissionMiddleware(Permission.PROFILE),
-        (req, res) => res.json({ message: 'Welcome to Profile', success: true })
+        authController.me
     );
 
     router.get('/settings',

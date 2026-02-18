@@ -45,6 +45,30 @@ export class AuthController {
         }
     };
 
+    public me = async (req: Request, res: Response) => {
+        try {
+            if (!req.user) {
+                return res.status(401).json({
+                    message: 'Not authenticated',
+                    success: false
+                });
+            }
+
+            const user = await this.authService.getProfile(req.user.id);
+            res.json({
+                message: 'User profile retrieved',
+                data: user,
+                success: true
+            });
+        } catch (error: any) {
+            console.error('Me API Error:', error);
+            res.status(401).json({
+                message: error.message || 'Internal Server Error',
+                success: false
+            });
+        }
+    };
+
     public register = async (req: Request, res: Response) => {
         try {
             const device = {
