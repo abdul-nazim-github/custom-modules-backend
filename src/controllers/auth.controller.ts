@@ -9,8 +9,11 @@ export class AuthController {
     }
 
     public login = async (req: Request, res: Response) => {
+        console.log('DEBUG: Login attempt started');
+        console.log('DEBUG: Headers:', JSON.stringify(req.headers));
         try {
             const { email, password, ...extra } = req.body;
+            console.log('DEBUG: Request body email:', email);
             if (!email || !password) {
                 return res.status(400).json({
                     message: 'Email and password are required',

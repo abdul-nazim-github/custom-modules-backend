@@ -15,16 +15,14 @@ const port = process.env.PORT || 3018;
 // Trust proxy so req.ip works correctly behind Render/Nginx
 app.set('trust proxy', 1);
 
-app.use(express.json());
-
 const authConfig = {
     mongoUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/auth-db',
     jwt: {
-        accessSecret: process.env.JWT_ACCESS_SECRET || 'access-secret',
+        accessSecret: process.env.JWT_ACCESS_SECRET || '',
         accessTTL: process.env.JWT_ACCESS_TTL || '15m',
-        refreshSecret: process.env.JWT_REFRESH_SECRET || 'refresh-secret',
+        refreshSecret: process.env.JWT_REFRESH_SECRET || '',
         refreshTTLms: parseInt(process.env.JWT_REFRESH_TTL_MS || '604800000'),
-        resetSecret: process.env.JWT_RESET_SECRET || 'reset-secret',
+        resetSecret: process.env.JWT_RESET_SECRET || '',
         resetTTL: process.env.JWT_RESET_TTL || '15m'
     },
     sessionSecret: process.env.SESSION_SECRET || 'session-secret',
@@ -38,12 +36,31 @@ const authConfig = {
     }
 };
 
+// --- CRITICAL ENV VALIDATION ---
+if (!authConfig.jwt.accessSecret || !authConfig.jwt.refreshSecret) {
+    console.error('FATAL ERROR: JWT secrets are missing in environment variables!');
+    process.exit(1);
+}
+
+// CORS must come before body parsers
 app.use(cors({
     origin: [authConfig.frontendUrl],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
     credentials: true
 }));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Handle JSON parse errors
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (err.type === 'entity.parse.failed') {
+        console.error('DEBUG: JSON Parse Failed:', err.message);
+        return res.status(400).json({ message: 'Invalid JSON', success: false });
+    }
+    next(err);
+});
 
 // for keep-alive
 app.get('/api/ping', (req, res) => {
@@ -55,12 +72,23 @@ app.use('/api', authModule.router);
 
 // Global Error Handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    logger.error(`Unhandled Error: ${err.message}`);
-    console.error(err.stack);
+    console.error('--- GLOBAL ERROR CAUGHT ---');
+    console.error('Message:', err.message);
+    console.error('Stack:', err.stack);
     res.status(err.status || 500).json({
         message: err.message || 'Internal Server Error',
         success: false
     });
+});
+
+// Global Process Handlers
+process.on('uncaughtException', (err) => {
+    console.error('DEBUG: UNCAUGHT EXCEPTION:', err.message);
+    console.error(err.stack);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('DEBUG: UNHANDLED REJECTION at:', promise, 'reason:', reason);
 });
 
 const start = async () => {
