@@ -3,7 +3,7 @@ import http from 'http';
 import { logger } from './logger.js';
 
 /**
- * Starts a keep-alive mechanism by pinging the specified URL every 2 minutes.
+ * Starts a keep-alive mechanism by pinging the specified URL every 5 minutes.
  * @param url The URL to ping.
  */
 export const startKeepAlive = (url: string) => {
@@ -12,9 +12,9 @@ export const startKeepAlive = (url: string) => {
         return;
     }
 
-    const interval = 2 * 60 * 1000; // 2 minutes
+    const interval = 5 * 60 * 1000; // 5 minutes
 
-    logger.info(`Keep-alive mechanism started. Pinging ${url} every 2 minutes.`);
+    logger.info(`Keep-alive mechanism started. Pinging ${url} every 5 minutes.`);
 
     setInterval(() => {
         const protocol = url.startsWith('https') ? https : http;
