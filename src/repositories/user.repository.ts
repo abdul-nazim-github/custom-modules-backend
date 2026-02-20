@@ -10,6 +10,13 @@ export class UserRepository {
     async findById(userId: Types.ObjectId) {
         return UserModel.findOne({ _id: userId, deleted_at: null });
     }
+    async findByIdAndUpdate(userId: Types.ObjectId, data: any) {
+        return UserModel.findOneAndUpdate(
+            { _id: userId, deleted_at: null },
+            { $set: data },   
+            { new: true }
+        );
+    }
 
     async create(data: {
         email: string;

@@ -63,7 +63,7 @@ const UserSchema = new Schema({
 }, {
     timestamps: {
         createdAt: 'created_at',
-        updatedAt: false
+        updatedAt: 'updated_at'
     },
     versionKey: false,
     toJSON: { virtuals: true },

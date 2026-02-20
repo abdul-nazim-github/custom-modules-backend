@@ -271,19 +271,41 @@ export class AuthService {
             message: 'User deleted successfully'
         };
     }
-    async updateProfile(userId: string, data: { first_name: string, last_name: string }) {
-        const user = await this.userRepository.findById(userId as any);
+    // async updateProfile(userId: string, data: { first_name: string, last_name: string }) {
+    //     const user = await this.userRepository.findById(userId as any);
+    //     if (!user) {
+    //         throw new Error('User not found');
+    //     }
+
+    //     user.first_name = data.first_name;
+    //     user.last_name = data.last_name;
+    //     await (user as any).save();
+
+    //     return {
+    //         message: 'Profile updated successfully',
+    //         data: user.toObject()
+    //     };
+    // }
+
+    async updateProfile(
+        userId: string,
+        data: { first_name: string; last_name: string }
+    ) {
+        const user = await this.userRepository.findByIdAndUpdate(
+            userId as any,
+            {
+                first_name: data.first_name,
+                last_name: data.last_name
+            }
+        );
+
         if (!user) {
             throw new Error('User not found');
         }
 
-        user.first_name = data.first_name;
-        user.last_name = data.last_name;
-        await (user as any).save();
-
         return {
             message: 'Profile updated successfully',
-            data: user.toObject()
+            data: user
         };
     }
 
